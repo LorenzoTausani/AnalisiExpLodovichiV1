@@ -53,16 +53,10 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
                 stim_lens = M_inizio_fine[:, 1] - M_inizio_fine[:, 0]
                 durata_corretta_stim = int(mode(stim_lens)[0])
                 Betw_cells_mean = np.empty((M_inizio_fine.shape[0],durata_corretta_stim))
-                #Seq_appaiate = []
                 for i, row in enumerate(M_inizio_fine):
-                    if np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/20:
+                    if np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10:
                         Betw_cells_mean[i,:] = np.mean(Fluorescence[:,row[0]:row[0]+durata_corretta_stim], axis=0)
-                        #QUESTO SOTTO ERA FATTO NEL CASO IN CUI DUE STIMOLI FOSSERO ADIACENTI. MA QUESTO è IMPOSSIBILE A CAUSA DELL'intertrial
-                        #elif np.abs(stim_lens[i]-2*durata_corretta_stim)< 2*(durata_corretta_stim/20): #se due orientamenti sono adiacenti
-                        #Betw_cells_mean[i,:] = np.mean(F_neuSubtract[:,row[0]:row[0]+durata_corretta_stim], axis=0)
-                        #Seq_appaiate.append(np.mean(F_neuSubtract[:,row[1]-durata_corretta_stim:row[1]], axis=0))
-                # if Seq_appaiate != []:
-                #   Betw_cells_mean = np.vstack((Betw_cells_mean, Seq_appaiate))
+                        #Nota: è impossibile che due sequenze dello stesso tipo siano adiacenti
                 Mean = np.mean(Betw_cells_mean, axis=0)
                 SEM = SEMf(Betw_cells_mean)
                 Mean_SEM = np.column_stack((Mean, SEM))
