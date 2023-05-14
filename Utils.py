@@ -71,3 +71,4 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
         np.savez(Mean_SEM_dict_filename, **Mean_SEM_dict)
     else:
         Mean_SEM_dict = np.load(Mean_SEM_dict_filename)
+    return Mean_SEM_dict
