@@ -4,6 +4,17 @@ import re
 from scipy.stats import mode
 from scipy.stats import zscore
 
+def get_orientation_keys(Mean_SEM_dict):
+  numeric_keys_int = []
+  for key in Mean_SEM_dict.keys():
+      if key.isnumeric():
+          numeric_keys_int.append(int(key))
+
+  numeric_keys_int = sorted(numeric_keys_int)
+  numeric_keys = [str(num) for num in numeric_keys_int]
+
+  return numeric_keys, numeric_keys_int
+
 def SEMf(Fluorescence_matrix):
    Std = np.std(Fluorescence_matrix, axis=0)
    nr_neurons = Fluorescence_matrix.shape[0]
@@ -66,3 +77,4 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
     else:
         Mean_SEM_dict = np.load(Mean_SEM_dict_filename)
     return Mean_SEM_dict
+
