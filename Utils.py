@@ -153,7 +153,7 @@ def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa
   R_ortho = Or_plus_180avg[ortho_or_idx]
   OSI = (R_pref -R_ortho)/(R_pref + R_ortho)
 
-  Or2 = [sublst for sublst in degrees_combinations if sublst != degrees_combinations[idx_max] and sublst != orthogonal_combinations[idx_max]]
+  Or2 = [sublst for sublst in degrees_combinations if sublst != degrees_combinations[pref_or_idx] and sublst != orthogonal_combinations[pref_or_idx]]
   if Or_plus_180avg[degrees_combinations.index(Or2[0])]>Or_plus_180avg[degrees_combinations.index(Or2[1])]:
     R_pref2 = Or_plus_180avg[degrees_combinations.index(Or2[0])]
     R_ortho2 = Or_plus_180avg[degrees_combinations.index(Or2[1])]
