@@ -78,7 +78,7 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
     return Mean_SEM_dict
 
 
-def Cell_max(logical_dict, Fluorescence, session_name, durata_corretta_stim ='mode', Fluorescence_type='F'):
+def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, durata_corretta_stim ='mode', Fluorescence_type='F'):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   Cell_max_dict_filename = session_name+Fluorescence_type+'_Cell_max_dict_'+durata_corretta_stim+'.npz'
   #durata_corretta_stim può anche essere settato come intero, che indichi il numero di frame da considerare
