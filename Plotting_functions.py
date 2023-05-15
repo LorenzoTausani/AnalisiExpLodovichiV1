@@ -58,7 +58,7 @@ def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
 
   # Aggiungi le etichette degli assi e un titolo
   plt.xlabel('Frames')
-  plt.ylabel('Z scored DF/F')
+  plt.ylabel(Fluorescence_type)
 
   plt.savefig(session_name+Fluorescence_type+'_avgOrientations.png')
   # Mostra il grafico
@@ -87,7 +87,7 @@ def Plot_AvgFlash(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
 
   # Aggiungi le etichette degli assi
   plt.xlabel('Frames')
-  plt.ylabel('Z scored DF/F')
+  plt.ylabel(Fluorescence_type)
   plt.savefig(session_name+Fluorescence_type+'_avgFlash.png')
 
   # Mostra il grafico
@@ -127,7 +127,7 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
 
   # Aggiungi le etichette degli assi e un titolo
   plt.xlabel('Frames')
-  plt.ylabel('Z scored DF/F')
+  plt.ylabel(Fluorescence_type)
 
   plt.savefig(session_name+Fluorescence_type+'_avgSBAs.png')
   # Mostra il grafico
@@ -177,4 +177,3 @@ def cumulativePlot_OSI(OSI_v):
   ax.axvline(x=0.5, color='red')
 
   plt.show()
-  
