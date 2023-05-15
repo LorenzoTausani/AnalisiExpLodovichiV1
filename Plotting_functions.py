@@ -132,3 +132,28 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name):
   plt.savefig(session_name+'_avgSBAs.png')
   # Mostra il grafico
   plt.show()
+
+
+def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict):
+  
+  Tuning_curve_avgSem = cell_OSI_dict['cell_'+str(cell_id)]
+  x = np.arange(Tuning_curve_avgSem.shape[1])
+
+  # Plot the mean values as a line
+  plt.plot(x, Tuning_curve_avgSem[0], color='blue', label='mean')
+
+  # Plot the standard error as a shaded region
+  plt.fill_between(x, Tuning_curve_avgSem[0] - Tuning_curve_avgSem[1], Tuning_curve_avgSem[0] + Tuning_curve_avgSem[1], color='lightblue', alpha=0.5, label='standard error')
+
+  # Add a legend and axis labels
+  plt.legend()
+  plt.xlabel('X')
+  plt.ylabel('Y')
+  plt.ylim([-0.1,5])
+  xticks = list(Cell_Max_dict.keys())
+  plt.xticks(range(len(xticks)), xticks)
+
+
+  # Show the plot
+  plt.show()
+  
