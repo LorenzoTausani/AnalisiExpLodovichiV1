@@ -15,10 +15,11 @@ def get_orientation_keys(Mean_SEM_dict):
   return numeric_keys, numeric_keys_int
 
 def SEMf(Fluorescence_matrix):
-   Std = np.std(Fluorescence_matrix, axis=0)
-   nr_neurons = Fluorescence_matrix.shape[0]
+   Std = np.nanstd(Fluorescence_matrix, axis=0)
+   nr_neurons = Fluorescence_matrix.shape[0] #andrebbe cambiato togliendo i nan
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
+
 
 def Create_logical_dict(session_name,stimoli,df):
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
@@ -78,23 +79,26 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
     return Mean_SEM_dict
 
 
-def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, durata_corretta_stim ='mode', Fluorescence_type='F'):
+def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F'):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
-  Cell_max_dict_filename = session_name+Fluorescence_type+'_Cell_max_dict_'+durata_corretta_stim+'.npz'
-  #durata_corretta_stim può anche essere settato come intero, che indichi il numero di frame da considerare
+  
+  #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
+  
+  if not(isinstance(averaging_window, str)):
+      averaging_window = str(averaging_window)
+  Cell_max_dict_filename = session_name+Fluorescence_type+'_Cell_max_dict_'+averaging_window+'.npz'
   if not(os.path.isfile(Cell_max_dict_filename)):
-    if not(isinstance(durata_corretta_stim, str)):
-        durata_corretta_stim = str(durata_corretta_stim)
     Cell_Max_dict = {}
     numeric_keys, numeric_keys_int = get_orientation_keys(logical_dict)
 
     for i, key in enumerate(numeric_keys): #per ogni orientamento...
         M_inizio_fine = logical_dict[key] #seleziona l'array con i tempi di inizio e quelli di fine
         stim_lens = M_inizio_fine[:, 1] - M_inizio_fine[:, 0] #calcola la durata di ciascun periodo di stimolazione con l'orientamento di interesse
-        if durata_corretta_stim =='mode':
-            durata_corretta_stim = int(mode(stim_lens)[0]) #la durata corretta dello stimolo è assunto essere la moda delle durate
+        durata_corretta_stim = int(mode(stim_lens)[0])
+        if averaging_window =='mode':
+            averaging_window = durata_corretta_stim #la durata corretta dello stimolo è assunto essere la moda delle durate
         else:
-            durata_corretta_stim = int(durata_corretta_stim)
+            averaging_window = int(averaging_window)
 
         # nr. cellule x nr stimolazioni con un certo orientamento
         Cells_maxs = np.full((Fluorescence.shape[0],M_inizio_fine.shape[0]), np.nan)
@@ -102,10 +106,51 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, durata_corret
             cell_trace = Fluorescence[cell,:] #estraggo l'intera traccia di fluorescenza di quella cellula
             for i, row in enumerate(M_inizio_fine): #per ogni stimolazione con un certo orientamento
                 if np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/20:#se lo stimolo ha la giusta durata
-                    Avg_PreStim = np.mean(cell_trace[row[0]-(durata_corretta_stim):row[0]]) #medio i valori di fluorescenza nei durata_corretta_stim frame prima dello stimolo (gray)
-                    Avg_stim = np.mean(cell_trace[row[0]:row[0]+durata_corretta_stim]) #medio i valori di fluorescenza nei durata_corretta_stim frame dello stimolo (gray)
+                    Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
                     Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
         Cell_Max_dict[key] = Cells_maxs
   else:
     Cell_Max_dict = np.load(Cell_max_dict_filename)
   return Cell_Max_dict
+
+
+def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6],plus180or = True):
+  
+  idx_max = np.nanargmax(Tuning_curve_avgSem[0,:]) #idx with maximum average activity
+  preferred_or = numeric_keys_int[idx_max]
+  #Next is if you want to consider R_pref and R_ortho also considering the +180 orientations
+  if plus180or:
+    R_pref  = np.mean([Tuning_curve_avgSem[0,idx_max],Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+4]]])
+    R_ortho = np.mean([Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+2]],Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+6]]])
+  else:
+    R_pref  = Tuning_curve_avgSem[0,idx_max]
+    R_ortho = Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+2]]
+
+  OSI = (R_pref -R_ortho)/(R_pref + R_ortho)
+  return OSI, preferred_or
+
+
+def Create_OSI_dict(Cell_Max_dict,F_neuSubtract):
+  nr_cells = F_neuSubtract.shape[0]
+  OSI_v = np.full((nr_cells), np.nan)
+  PrefOr_v = np.full((nr_cells), np.nan)
+  numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
+  idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6]
+
+  cell_OSI_dict ={}
+  for cell_id in range(nr_cells):
+    Tuning_curve_avgSem = np.full((2,len(Cell_Max_dict.keys())), np.nan) #len(Cell_Max_dict.keys() = nr of orientations
+
+    for i,key in enumerate(Cell_Max_dict.keys()):
+      Tuning_curve_avgSem[0,i] = np.nanmean(Cell_Max_dict[key][cell_id])
+      Tuning_curve_avgSem[1,i] = SEMf(Cell_Max_dict[key][cell_id])
+    cell_OSI_dict['cell_'+str(cell_id)] = Tuning_curve_avgSem
+
+    OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
+    OSI_v[cell_id] = OSI
+    PrefOr_v[cell_id] = preferred_or
+  cell_OSI_dict['OSI'] = OSI_v
+  cell_OSI_dict['PrefOr'] = PrefOr_v
+  return cell_OSI_dict
+
