@@ -2,7 +2,6 @@ import numpy as np
 import os
 import re
 from scipy.stats import mode
-from scipy.stats import zscore
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = []
