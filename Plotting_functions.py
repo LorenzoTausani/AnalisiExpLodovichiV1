@@ -134,7 +134,7 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name):
   plt.show()
 
 
-def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[-0.1,2]):
+def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[]):
   
   Tuning_curve_avgSem = cell_OSI_dict['cell_'+str(cell_id)]
   x = np.arange(Tuning_curve_avgSem.shape[1])
@@ -149,7 +149,8 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[-0.1,2]):
   plt.legend()
   plt.xlabel('X')
   plt.ylabel('Y')
-  plt.ylim(y_range)
+  if y_range!=[]:
+    plt.ylim(y_range)
   xticks = list(Cell_Max_dict.keys())
   plt.xticks(range(len(xticks)), xticks)
 

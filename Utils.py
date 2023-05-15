@@ -130,11 +130,54 @@ def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,
   OSI = (R_pref -R_ortho)/(R_pref + R_ortho)
   return OSI, preferred_or
 
+def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  
+  degrees_combinations=[[0,4,8],[1,5],[2,6],[3,7]] #i.e. [[0,180,360],[45,225],[90,270],[135,315]]
+  orthogonal_combinations = [[2,6],[3,7],[0,4,8],[1,5]]
+  if np.sum(Tuning_curve_avgSem[0,:]<0)>0: #se c'è almeno un valore sotto lo zero...
+    Tuning_curve_avgSem[0,:] = Tuning_curve_avgSem[0,:] + np.abs(np.min(Tuning_curve_avgSem[0,:]))
 
-def Create_OSI_dict(Cell_Max_dict,F_neuSubtract):
+  Or_plus_180avg = np.full((len(degrees_combinations)),np.nan)
+  
+  for idx,tupl in enumerate(degrees_combinations):
+    el_tobe_avg = np.full((len(tupl)),np.nan)
+    for i,el in enumerate(tupl):
+      el_tobe_avg[i]=Tuning_curve_avgSem[0,el]
+    Or_plus_180avg[idx]=np.nanmean(el_tobe_avg)
+
+  pref_or_idx = np.nanargmax(Or_plus_180avg)
+  preferred_or = [numeric_keys_int[i] for i in degrees_combinations[pref_or_idx]]
+  ortho_or_idx = degrees_combinations.index(orthogonal_combinations[pref_or_idx])
+
+  R_pref = Or_plus_180avg[pref_or_idx]
+  R_ortho = Or_plus_180avg[ortho_or_idx]
+  OSI = (R_pref -R_ortho)/(R_pref + R_ortho)
+
+  Or2 = [sublst for sublst in degrees_combinations if sublst != degrees_combinations[idx_max] and sublst != orthogonal_combinations[idx_max]]
+  if Or_plus_180avg[degrees_combinations.index(Or2[0])]>Or_plus_180avg[degrees_combinations.index(Or2[1])]:
+    R_pref2 = Or_plus_180avg[degrees_combinations.index(Or2[0])]
+    R_ortho2 = Or_plus_180avg[degrees_combinations.index(Or2[1])]
+    preferred_or2 = [numeric_keys_int[i] for i in degrees_combinations[degrees_combinations.index(Or2[0])]]
+  else:
+    R_pref2 = Or_plus_180avg[degrees_combinations.index(Or2[1])]
+    R_ortho2 = Or_plus_180avg[degrees_combinations.index(Or2[0])]
+    preferred_or2 = [numeric_keys_int[i] for i in degrees_combinations[degrees_combinations.index(Or2[1])]]
+
+  OSI2 = (R_pref2 -R_ortho2)/(R_pref2 + R_ortho2)
+
+  Best_OSI = np.max([OSI,OSI2])
+  OSI_arr=np.array((OSI,OSI2,Best_OSI))
+  preferred_or_list = [preferred_or,preferred_or2]
+  return OSI_arr,preferred_or_list
+
+
+def Create_OSI_dict(Cell_Max_dict,F_neuSubtract,OSI_alternative=True):
   nr_cells = F_neuSubtract.shape[0]
-  OSI_v = np.full((nr_cells), np.nan)
-  PrefOr_v = np.full((nr_cells), np.nan)
+  if OSI_alternative:
+    OSI_v = np.full((nr_cells,3), np.nan)
+    PrefOr_v = []   
+  else:
+    OSI_v = np.full((nr_cells), np.nan)
+    PrefOr_v = np.full((nr_cells), np.nan)
   numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
   idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6]
 
@@ -146,10 +189,14 @@ def Create_OSI_dict(Cell_Max_dict,F_neuSubtract):
       Tuning_curve_avgSem[0,i] = np.nanmean(Cell_Max_dict[key][cell_id])
       Tuning_curve_avgSem[1,i] = SEMf(Cell_Max_dict[key][cell_id])
     cell_OSI_dict['cell_'+str(cell_id)] = Tuning_curve_avgSem
-
-    OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
-    OSI_v[cell_id] = OSI
-    PrefOr_v[cell_id] = preferred_or
+    if OSI_alternative:
+       OSI_arr,preferred_or_list = OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int)
+       OSI_v[cell_id,:] = OSI_arr
+       PrefOr_v.append(preferred_or_list)
+    else:
+      OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
+      OSI_v[cell_id] = OSI
+      PrefOr_v[cell_id] = preferred_or
   cell_OSI_dict['OSI'] = OSI_v
   cell_OSI_dict['PrefOr'] = PrefOr_v
   return cell_OSI_dict
