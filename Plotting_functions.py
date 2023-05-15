@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 
-def Plot_AvgOrientations(Mean_SEM_dict,session_name):
+def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
 
   numeric_keys = []
 
@@ -60,11 +60,11 @@ def Plot_AvgOrientations(Mean_SEM_dict,session_name):
   plt.xlabel('Frames')
   plt.ylabel('Z scored DF/F')
 
-  plt.savefig(session_name+'_avgOrientations.png')
+  plt.savefig(session_name+Fluorescence_type+'_avgOrientations.png')
   # Mostra il grafico
   plt.show()
 
-def Plot_AvgFlash(Mean_SEM_dict,session_name):
+def Plot_AvgFlash(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
   mean_gf = Mean_SEM_dict['gray flash'][:,0]
   sem_gf = Mean_SEM_dict['gray flash'][:,1]
   mean_b = Mean_SEM_dict['black'][:,0]
@@ -88,13 +88,13 @@ def Plot_AvgFlash(Mean_SEM_dict,session_name):
   # Aggiungi le etichette degli assi
   plt.xlabel('Frames')
   plt.ylabel('Z scored DF/F')
-  plt.savefig(session_name+'_avgFlash.png')
+  plt.savefig(session_name+Fluorescence_type+'_avgFlash.png')
 
   # Mostra il grafico
   plt.show()
 
 
-def Plot_AvgSBA(Mean_SEM_dict,session_name):
+def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
   SBAs = ['initial gray', 'after flash gray', 'final gray']
 
   fig, ax = plt.subplots()
@@ -129,7 +129,7 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name):
   plt.xlabel('Frames')
   plt.ylabel('Z scored DF/F')
 
-  plt.savefig(session_name+'_avgSBAs.png')
+  plt.savefig(session_name+Fluorescence_type+'_avgSBAs.png')
   # Mostra il grafico
   plt.show()
 
@@ -140,15 +140,15 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[]):
   x = np.arange(Tuning_curve_avgSem.shape[1])
 
   # Plot the mean values as a line
-  plt.plot(x, Tuning_curve_avgSem[0], color='blue', label='mean')
+  plt.plot(x, Tuning_curve_avgSem[0], color='purple', label='mean')
 
   # Plot the standard error as a shaded region
-  plt.fill_between(x, Tuning_curve_avgSem[0] - Tuning_curve_avgSem[1], Tuning_curve_avgSem[0] + Tuning_curve_avgSem[1], color='lightblue', alpha=0.5, label='standard error')
+  plt.fill_between(x, Tuning_curve_avgSem[0] - Tuning_curve_avgSem[1], Tuning_curve_avgSem[0] + Tuning_curve_avgSem[1], color='purple', alpha=0.2, label='standard error')
 
   # Add a legend and axis labels
-  plt.legend()
-  plt.xlabel('X')
-  plt.ylabel('Y')
+  plt.xlabel('Orientation')
+  plt.ylabel('(Fstim-Fpre)/Fpre')
+  plt.title('cell_'+str(cell_id)+', OSI: '+str(np.round(cell_OSI_dict['OSI'][cell_id,0],decimals=2)))
   if y_range!=[]:
     plt.ylim(y_range)
   xticks = list(Cell_Max_dict.keys())
@@ -157,3 +157,24 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[]):
 
   # Show the plot
   plt.show()
+
+def cumulativePlot_OSI(OSI_v):
+  sorted_OSI_v = np.sort(OSI_v)
+
+  # calculate the cumulative distribution function (CDF)
+  cumulative_prob = np.cumsum(np.ones_like(sorted_OSI_v)) / len(sorted_OSI_v)
+
+  fig, ax = plt.subplots()
+  ax.plot(sorted_OSI_v, cumulative_prob)
+  ax.set_xlabel('OSI')
+  ax.set_ylabel('Cumulative probability')
+  ax.set_xlim([0,1])
+  perc_above05 = (np.sum(sorted_OSI_v>=0.5)/len(sorted_OSI_v))*100
+  ax.set_title('OSI>0.5: '+str(np.sum(sorted_OSI_v>=0.5))+'/'+str(len(sorted_OSI_v))+' cells ('+str(np.round(perc_above05,decimals=2))+' %)')
+
+
+  # Draw a vertical line at x=2
+  ax.axvline(x=0.5, color='red')
+
+  plt.show()
+  

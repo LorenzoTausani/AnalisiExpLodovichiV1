@@ -110,6 +110,7 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
                     Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
                     Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
         Cell_Max_dict[key] = Cells_maxs
+    np.savez(Cell_max_dict_filename, **Cell_Max_dict)
   else:
     Cell_Max_dict = np.load(Cell_max_dict_filename)
   return Cell_Max_dict
@@ -130,7 +131,7 @@ def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,
   OSI = (R_pref -R_ortho)/(R_pref + R_ortho)
   return OSI, preferred_or
 
-def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  
+def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa a OSIf
   degrees_combinations=[[0,4,8],[1,5],[2,6],[3,7]] #i.e. [[0,180,360],[45,225],[90,270],[135,315]]
   orthogonal_combinations = [[2,6],[3,7],[0,4,8],[1,5]]
   if np.sum(Tuning_curve_avgSem[0,:]<0)>0: #se c'è almeno un valore sotto lo zero...
