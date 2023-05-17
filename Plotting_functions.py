@@ -7,7 +7,7 @@ import copy
 from matplotlib.gridspec import GridSpec
 
 
-def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
+def Plot_AvgOrientations(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
 
   numeric_keys = []
 
@@ -18,9 +18,9 @@ def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
   numeric_keys = sorted(numeric_keys)
   numeric_keys = [str(num) for num in numeric_keys]
 
-
-  # Crea un nuovo plot
-  fig, ax = plt.subplots()
+  if ax ==[]:
+    # Crea un nuovo plot
+    fig, ax = plt.subplots()
 
   # Traccia le linee e le bande di errore per ogni chiave del dizionario
   colors = cm.jet(np.linspace(0, 1, len(numeric_keys)))
@@ -40,12 +40,12 @@ def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
         sem = np.concatenate((sem_stim, sem_intT))
 
         # Traccia la linea
-        line, = plt.plot(mean, color=colors[i])
+        line, = ax.plot(mean, color=colors[i])
 
         # Aggiungi la banda di errore shaded
         upper_bound = mean + sem
         lower_bound = mean - sem
-        plt.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
+        ax.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
         
         patch = Patch(facecolor=colors[i])
         # Aggiungi l'etichetta alla legenda
@@ -53,50 +53,49 @@ def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
         patches.append(patch)
 
   # Imposta il colore di sfondo per x > len(mean_stim)
-  plt.axvspan(len(mean_stim), len(mean), facecolor='gray', alpha=0.2)
+  ax.axvspan(len(mean_stim), len(mean), facecolor='gray', alpha=0.2)
 
   # Aggiungi la legenda fuori dal plot
-  plt.legend(patches, labels, loc='center left', bbox_to_anchor=(1.0, 0.5))
+  ax.legend(patches, labels, loc='center left', bbox_to_anchor=(1.0, 0.5))
 
   # Aggiungi le etichette degli assi e un titolo
-  plt.xlabel('Frames')
-  plt.ylabel(Fluorescence_type)
+  ax.set_xlabel('Frames')
+  ax.set_ylabel(Fluorescence_type)
 
-  plt.savefig(session_name+Fluorescence_type+'_avgOrientations.png')
+  #plt.savefig(session_name+Fluorescence_type+'_avgOrientations.png')
   # Mostra il grafico
-  plt.show()
+  #plt.show()
 
-def Plot_AvgFlash(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
+def Plot_AvgFlash(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
   mean_gf = Mean_SEM_dict['gray flash'][:,0]
   sem_gf = Mean_SEM_dict['gray flash'][:,1]
   mean_b = Mean_SEM_dict['black'][:,0]
   sem_b = Mean_SEM_dict['black'][:,1]
   mean_flash = np.concatenate((mean_gf, mean_b))
   sem_flash = np.concatenate((sem_gf, sem_b))
+  if ax==[]:
+    fig, ax = plt.subplots()  # Calcola la banda di errore
 
-
-  plt.figure()
   # Calcola la banda di errore
   upper_bound = mean_flash + sem_flash
   lower_bound = mean_flash - sem_flash
   ochre_yellow = (204/255, 119/255, 34/255)
 
   # Disegna il grafico della media con SEM shaded
-  plt.plot(mean_flash, color=ochre_yellow)
-  plt.fill_between(range(len(mean_flash)), lower_bound, upper_bound, color=ochre_yellow , alpha=0.2)
+  ax.plot(mean_flash, color=ochre_yellow)
+  ax.fill_between(range(len(mean_flash)), lower_bound, upper_bound, color=ochre_yellow , alpha=0.2)
   # Imposta il colore di sfondo per x > len(mean_stim)
-  plt.axvspan(len(mean_gf), len(mean_flash), facecolor='black', alpha=0.2)
+  ax.axvspan(len(mean_gf), len(mean_flash), facecolor='black', alpha=0.2)
 
   # Aggiungi le etichette degli assi
-  plt.xlabel('Frames')
-  plt.ylabel(Fluorescence_type)
-  plt.savefig(session_name+Fluorescence_type+'_avgFlash.png')
+  ax.set_xlabel('Frames')
+  ax.set_ylabel(Fluorescence_type)
+  #plt.savefig(session_name+Fluorescence_type+'_avgFlash.png')
 
   # Mostra il grafico
-  plt.show()
+  #plt.show()
 
-
-def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
+def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F'):
   SBAs = ['initial gray', 'after flash gray', 'final gray']
 
   fig, ax = plt.subplots()
@@ -131,9 +130,9 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
   plt.xlabel('Frames')
   plt.ylabel(Fluorescence_type)
 
-  plt.savefig(session_name+Fluorescence_type+'_avgSBAs.png')
+  #plt.savefig(session_name+Fluorescence_type+'_avgSBAs.png')
   # Mostra il grafico
-  plt.show()
+  #plt.show()
 
 
 def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
@@ -227,3 +226,19 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict):
 
   plt.subplots_adjust(hspace=0.3,wspace=0.2)
   plt.show()
+
+def summaryPlot_AvgActivity(Mean_SEM_dict, Fluorescence_type = 'DF_F_zscored'):
+
+  fig = plt.figure(figsize=(20, 10))
+  gs = GridSpec(2, 3, figure=fig)
+  ax1 = fig.add_subplot(gs[0, :-1])
+  Plot_AvgOrientations(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax1)
+  # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
+  ax2 = fig.add_subplot(gs[0, -1])
+  Plot_AvgFlash(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax2)
+  ax3 = fig.add_subplot(gs[1, :])
+  Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax3)  
+  plt.subplots_adjust(hspace=0.3,wspace=0.75)
+  plt.show()  
+
+  
