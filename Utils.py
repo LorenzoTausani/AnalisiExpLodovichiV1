@@ -1,6 +1,8 @@
 import numpy as np
 import os
 import re
+import pandas as pd
+import glob
 from scipy.stats import mode
 
 def get_orientation_keys(Mean_SEM_dict):
@@ -19,6 +21,33 @@ def SEMf(Fluorescence_matrix):
    nr_neurons = Fluorescence_matrix.shape[0] #andrebbe cambiato togliendo i nan
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
+
+def Df_loader_and_StimVec(Session_folder):
+  # use the glob module to find the Excel file with the specified extension
+  excel_files = glob.glob(os.path.join(Session_folder, "*.xlsx"))
+  #print(excel_files[0])
+
+  # Carica il file Excel in un DataFrame
+  df = pd.read_excel(excel_files[0])
+  #chiamo ogni gray in funzione dell'orientamento precedente
+  for it, row in df.iterrows():
+    if row['Orientamenti']=='gray':
+      orientamento = df['Orientamenti'][it-1]
+      df['Orientamenti'][it] = 'gray '+str(orientamento)
+
+  # Crea un array vuoto per il vettore di stimoli
+  StimVec = np.empty(df['N_frames'].max(), dtype=object)
+  # Itera sul DataFrame e assegna il tipo di stimolo a ogni unità di tempo
+  top=0
+  for it, row in df.iterrows():
+      if it==0:
+        prec_row = row
+      else:
+        StimVec[top:row['N_frames']] = prec_row['Orientamenti']
+        top=row['N_frames']
+        prec_row = row
+        
+  return df, StimVec
 
 
 def Create_logical_dict(session_name,stimoli,df):
