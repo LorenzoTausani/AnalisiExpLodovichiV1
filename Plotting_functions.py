@@ -3,6 +3,8 @@ from matplotlib import cm
 from matplotlib.patches import Patch
 import re
 import numpy as np
+import copy
+from matplotlib.gridspec import GridSpec
 
 
 def Plot_AvgOrientations(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
@@ -134,37 +136,36 @@ def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F'):
   plt.show()
 
 
-def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[]):
+def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
   
   Tuning_curve_avgSem = cell_OSI_dict['cell_'+str(cell_id)]
   x = np.arange(Tuning_curve_avgSem.shape[1])
-
+  if ax ==[]:
+    fig, ax = plt.subplots()
   # Plot the mean values as a line
-  plt.plot(x, Tuning_curve_avgSem[0], color='purple', label='mean')
+  ax.plot(x, Tuning_curve_avgSem[0], color='purple', label='mean')
 
   # Plot the standard error as a shaded region
-  plt.fill_between(x, Tuning_curve_avgSem[0] - Tuning_curve_avgSem[1], Tuning_curve_avgSem[0] + Tuning_curve_avgSem[1], color='purple', alpha=0.2, label='standard error')
+  ax.fill_between(x, Tuning_curve_avgSem[0] - Tuning_curve_avgSem[1], Tuning_curve_avgSem[0] + Tuning_curve_avgSem[1], color='purple', alpha=0.2, label='standard error')
 
   # Add a legend and axis labels
-  plt.xlabel('Orientation')
-  plt.ylabel('(Fstim-Fpre)/Fpre')
-  plt.title('cell_'+str(cell_id)+', OSI: '+str(np.round(cell_OSI_dict['OSI'][cell_id,0],decimals=2)))
+  ax.set_xlabel('Orientation')
+  ax.set_ylabel('(Fstim-Fpre)/Fpre')
+  ax.set_title('cell_'+str(cell_id)+', OSI: '+str(np.round(cell_OSI_dict['OSI'][cell_id,0],decimals=2)))
   if y_range!=[]:
-    plt.ylim(y_range)
+    ax.set_ylim(y_range)
   xticks = list(Cell_Max_dict.keys())
-  plt.xticks(range(len(xticks)), xticks)
+  ax.set_xticks(range(len(xticks)), xticks)
 
-
-  # Show the plot
-  plt.show()
-
-def cumulativePlot_OSI(OSI_v):
+def cumulativePlot_OSI(OSI_v, ax=[]):
   sorted_OSI_v = np.sort(OSI_v)
 
   # calculate the cumulative distribution function (CDF)
   cumulative_prob = np.cumsum(np.ones_like(sorted_OSI_v)) / len(sorted_OSI_v)
 
-  fig, ax = plt.subplots()
+  if ax == []:
+    fig, ax = plt.subplots()
+
   ax.plot(sorted_OSI_v, cumulative_prob)
   ax.set_xlabel('OSI')
   ax.set_ylabel('Cumulative probability')
@@ -176,4 +177,53 @@ def cumulativePlot_OSI(OSI_v):
   # Draw a vertical line at x=2
   ax.axvline(x=0.5, color='red')
 
+def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
+  OSI_idx05 = OSI_v>0.5
+  PrefOr = np.array(cell_OSI_dict['PrefOr'])
+  PrefOr05 = PrefOr[OSI_idx05,0]
+  # Get the counts of unique lists
+  unique_lists, counts = np.unique(PrefOr05, return_counts=True)
+  unique_strings = unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
+  
+  if ax==[]:
+    fig, ax = plt.subplots()
+  ax.pie(counts, labels=unique_strings, autopct='%1.1f%%')
+
+  # Add a title
+  ax.set_title('OSI>0.5 cells distribution')
+
+def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict):
+  OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])[:,0]
+
+  OSI_v[OSI_v>1]=np.nan
+  OSI_v[OSI_v<0]=np.nan
+  sorted_idxs = np.argsort(OSI_v)
+  Best = np.nanargmax(OSI_v)
+  sorted_idxs = sorted_idxs[:np.argmax(sorted_idxs==Best)+1]
+
+  fig = plt.figure(layout="constrained")
+  fig = plt.figure(figsize=(20, 10))
+  gs = GridSpec(2, 2, figure=fig)
+  ax1 = fig.add_subplot(gs[0, :-1])
+  cumulativePlot_OSI(OSI_v, ax=ax1)
+  # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
+  ax2 = fig.add_subplot(gs[0, -1])
+  Orientation_freq_plot(OSI_v, ax=ax2)
+
+  # Create a nested grid for the second subplot
+  gs1 = gs[1, 0].subgridspec(2, 1, hspace=0.75)
+  ax3 = fig.add_subplot(gs1[0])
+  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-1], Cell_Max_dict, y_range=[], ax=ax3)
+    
+  ax4 = fig.add_subplot(gs1[1])
+  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-2], Cell_Max_dict, y_range=[], ax=ax4)
+
+  gs2 = gs[1, 1].subgridspec(2, 1, hspace=0.75)
+  ax5 = fig.add_subplot(gs2[0])
+  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-3], Cell_Max_dict, y_range=[], ax=ax5)
+
+  ax6 = fig.add_subplot(gs2[1])
+  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-4], Cell_Max_dict, y_range=[], ax=ax6)
+
+  plt.subplots_adjust(hspace=0.3,wspace=0.2)
   plt.show()
