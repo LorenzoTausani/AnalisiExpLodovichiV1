@@ -191,7 +191,7 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   # Add a title
   ax.set_title('OSI>0.5 cells distribution')
 
-def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict):
+def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='F'):
   OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])[:,0]
 
   OSI_v[OSI_v>1]=np.nan
@@ -225,9 +225,10 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict):
   plot_cell_tuning(cell_OSI_dict, sorted_idxs[-4], Cell_Max_dict, y_range=[], ax=ax6)
 
   plt.subplots_adjust(hspace=0.3,wspace=0.2)
+  plt.savefig(session_name+'_'+Fluorescence_type+'_avgActivity.png')
   plt.show()
 
-def summaryPlot_AvgActivity(Mean_SEM_dict, Fluorescence_type = 'DF_F_zscored'):
+def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_F_zscored'):
 
   fig = plt.figure(figsize=(20, 10))
   gs = GridSpec(2, 3, figure=fig)
@@ -239,6 +240,7 @@ def summaryPlot_AvgActivity(Mean_SEM_dict, Fluorescence_type = 'DF_F_zscored'):
   ax3 = fig.add_subplot(gs[1, :])
   Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax3)  
   plt.subplots_adjust(hspace=0.3,wspace=0.75)
-  plt.show()  
+  plt.savefig(session_name+'_'+Fluorescence_type+'_avgActivity.png')
+  plt.show()
 
   
