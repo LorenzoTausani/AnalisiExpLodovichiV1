@@ -26,7 +26,7 @@ def SEMf(Fluorescence_matrix):
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
 
-def single_session_analysis(Session_folder='manual_selection', session_name='none'):
+def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False):
   if Session_folder=='manual_selection':
     from google.colab import drive
     drive.mount('/content/drive')
@@ -43,6 +43,12 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     session_name = dir_list[idx_session]
     Session_folder = os.path.join(sbj_folder,session_name)
     os.chdir(Session_folder)
+
+    if Force_reanalysis:
+      shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
+      shutil.rmtree(os.path.join(Session_folder,'Plots/'))      
+
+
 
   df, StimVec = Df_loader_and_StimVec(Session_folder)
   F = np.load('F.npy')
@@ -63,7 +69,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
   cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
 
-  os.makedirs(Session_folder+'Plots/', exist_ok=True); os.chdir(Session_folder+'Plots/')
+  os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
   Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
   
