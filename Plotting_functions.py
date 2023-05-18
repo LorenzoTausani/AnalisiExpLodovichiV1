@@ -201,13 +201,13 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='
   sorted_idxs = sorted_idxs[:np.argmax(sorted_idxs==Best)+1]
 
   fig = plt.figure(layout="constrained")
-  fig = plt.figure(figsize=(20, 10))
+  fig = plt.figure(figsize=(25, 10))
   gs = GridSpec(2, 2, figure=fig)
   ax1 = fig.add_subplot(gs[0, :-1])
   cumulativePlot_OSI(OSI_v, ax=ax1)
   # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
   ax2 = fig.add_subplot(gs[0, -1])
-  Orientation_freq_plot(OSI_v, ax=ax2)
+  Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=ax2)
 
   # Create a nested grid for the second subplot
   gs1 = gs[1, 0].subgridspec(2, 1, hspace=0.75)
