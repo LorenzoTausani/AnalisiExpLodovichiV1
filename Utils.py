@@ -27,7 +27,9 @@ def SEMf(Fluorescence_matrix):
    return SEM
 
 def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False):
+  getoutput=False
   if Session_folder=='manual_selection':
+    getoutput=True
     from google.colab import drive
     drive.mount('/content/drive')
 
@@ -73,7 +75,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
   
-  if Session_folder=='manual_selection':
+  if getoutput:
     return locals()
 
 def Analyze_all(Force_reanalysis = True):
