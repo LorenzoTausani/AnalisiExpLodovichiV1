@@ -253,34 +253,46 @@ def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_
   plt.savefig(session_name+'_'+Fluorescence_type+'_avgActivity.png')
   plt.show()
 
-def highOSI_cell_map(stat,OSI_v,cell_OSI_dict,ax=[]):
-  OSI_idx05 = OSI_v>0.5
-  PrefOr = cell_OSI_dict['PrefOr']
-  PrefOr05 = PrefOr[OSI_idx05,0]
-  stat_OSI05= stat[OSI_v>0.5]
+def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
+    OSI_idx05 = OSI_v > 0.5
+    PrefOr = cell_OSI_dict['PrefOr'][:, 0]
 
-  color_dict = {'[0, 180, 360]': 'blue','[45, 225]': 'orange','[90, 270]': 'green', '[135, 315]': 'red'}
+    color_dict = {'[0, 180, 360]': 'blue', '[45, 225]': 'orange', '[90, 270]': 'green', '[135, 315]': 'red'}
 
-  # Create a black 512x512 background
-  if ax==[]:
-    fig, ax = plt.subplots(figsize=[10,10])
-  ax.set_xlim([0, 512])
-  ax.set_ylim([0, 512])
-  ax.set_facecolor('black')
+    # Create a black 512x512 background
+    if ax == []:
+        fig, ax = plt.subplots(figsize=[10, 10])
+    ax.set_xlim([0, 512])
+    ax.set_ylim([0, 512])
+    ax.set_facecolor('black')
 
-  # Iterate over the circle centers and radii
-  for idx,cell in enumerate(stat_OSI05):
-      c = copy.deepcopy(cell['med'])
-      c.reverse()
-      r = cell['radius']
-      
-      # Determine the circle color based on the radius
-      color = color_dict[str(PrefOr05[idx])]
+    # Create two lists to hold the non-grey and grey circles
+    non_grey_circles = []
+    grey_circles = []
 
-      # Create the circle patch with the given center and radius
-      circle = plt.Circle(c, r, color=color)
+    # Iterate over the circle centers and radii
+    for idx, cell in enumerate(stat):
+        c = copy.deepcopy(cell['med'])
+        c.reverse()
+        r = cell['radius']
 
-      # Add the circle to the plot
-      ax.add_artist(circle)
+        if OSI_idx05[idx] == True:
+            # Determine the circle color based on the radius
+            color = color_dict[str(PrefOr[idx])]
+            # Create the circle patch with the given center and radius
+            circle = plt.Circle(c, r, color=color)
+            non_grey_circles.append(circle)
+        else:
+            # Create the circle patch with the given center and radius
+            circle = plt.Circle(c, r, color='grey', alpha=0.2)
+            grey_circles.append(circle)
 
-  ax.set_title('OSI>0.5 cells position')
+
+    # Add the grey circles to the plot first, and then the coloured ones
+    for circle in grey_circles:
+        ax.add_artist(circle)
+
+    for circle in non_grey_circles:
+        ax.add_artist(circle)
+
+    ax.set_title('OSI>0.5 cells position')
