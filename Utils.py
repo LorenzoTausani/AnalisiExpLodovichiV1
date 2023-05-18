@@ -258,7 +258,7 @@ def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa
 
 
 def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
-  OSI_dict_filename = session_name+'_'+Cell_Max_dict['Fluorescence_type']+'_OSI_dict_'+Cell_Max_dict['averaging_window']+'.npz'
+  OSI_dict_filename = session_name+'_'+str(Cell_Max_dict['Fluorescence_type'])+'_OSI_dict_'+str(Cell_Max_dict['averaging_window'])+'.npz'
   if not(os.path.isfile(OSI_dict_filename)):
     nr_cells = Cell_Max_dict['0'].shape[0]
     if OSI_alternative:
