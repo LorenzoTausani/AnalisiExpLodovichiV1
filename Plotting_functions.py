@@ -95,10 +95,10 @@ def Plot_AvgFlash(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
   # Mostra il grafico
   #plt.show()
 
-def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F'):
+def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F',ax=[]):
   SBAs = ['initial gray', 'after flash gray', 'final gray']
-
-  fig, ax = plt.subplots()
+  if ax==[]:
+    fig, ax = plt.subplots()
 
   # Traccia le linee e le bande di errore per ogni chiave del dizionario
   colors = cm.jet(np.linspace(0, 1, len(SBAs)))
@@ -110,12 +110,12 @@ def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F'):
           sem = Mean_SEM_dict[key][:,1]
 
           # Traccia la linea
-          line, = plt.plot(mean, color=colors[i])
+          line, = ax.plot(mean, color=colors[i])
 
           # Aggiungi la banda di errore shaded
           upper_bound = mean + sem
           lower_bound = mean - sem
-          plt.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
+          ax.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
           
           patch = Patch(facecolor=colors[i])
           # Aggiungi l'etichetta alla legenda
@@ -124,11 +124,11 @@ def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F'):
 
 
   # Aggiungi la legenda fuori dal plot
-  plt.legend(patches, labels, loc='center left', bbox_to_anchor=(1.0, 0.5))
+  ax.legend(patches, labels, loc='center left', bbox_to_anchor=(1.0, 0.5))
 
   # Aggiungi le etichette degli assi e un titolo
-  plt.xlabel('Frames')
-  plt.ylabel(Fluorescence_type)
+  ax.set_xlabel('Frames')
+  ax.set_ylabel(Fluorescence_type)
 
   #plt.savefig(session_name+Fluorescence_type+'_avgSBAs.png')
   # Mostra il grafico
