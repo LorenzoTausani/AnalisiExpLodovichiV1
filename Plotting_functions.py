@@ -95,7 +95,7 @@ def Plot_AvgFlash(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
   # Mostra il grafico
   #plt.show()
 
-def Plot_AvgSBA(Mean_SEM_dict,session_name,Fluorescence_type = 'F',ax=[]):
+def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F',ax=[]):
   SBAs = ['initial gray', 'after flash gray', 'final gray']
   if ax==[]:
     fig, ax = plt.subplots()
