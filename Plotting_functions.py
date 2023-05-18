@@ -5,6 +5,8 @@ import re
 import numpy as np
 import copy
 from matplotlib.gridspec import GridSpec
+import Utils
+from Utils import *
 
 
 def Plot_AvgOrientations(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
@@ -153,7 +155,8 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
   ax.set_title('cell_'+str(cell_id)+', OSI: '+str(np.round(cell_OSI_dict['OSI'][cell_id,0],decimals=2)))
   if y_range!=[]:
     ax.set_ylim(y_range)
-  xticks = list(Cell_Max_dict.keys())
+  numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
+  xticks = list(numeric_keys)
   ax.set_xticks(range(len(xticks)), xticks)
 
 def cumulativePlot_OSI(OSI_v, ax=[]):
