@@ -4,6 +4,10 @@ import re
 import pandas as pd
 import glob
 from scipy.stats import mode
+from scipy.stats import zscore
+import shutil
+import Plotting_functions
+from Plotting_functions import *
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = []
@@ -21,6 +25,57 @@ def SEMf(Fluorescence_matrix):
    nr_neurons = Fluorescence_matrix.shape[0] #andrebbe cambiato togliendo i nan
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
+
+def Analyze_all(Force_reanalysis = True):
+  from google.colab import drive
+  drive.mount('/content/drive')
+
+  Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
+  os.chdir(Main_folder)
+  dir_list = os.listdir(Main_folder)
+
+  for c_dir in dir_list:
+    Subj_folder = Main_folder+c_dir+'/'
+    os.chdir(Subj_folder)
+    dir_list = os.listdir(Subj_folder)
+    for session_name in dir_list:
+      Session_folder = Subj_folder+session_name+'/'
+      os.chdir(Session_folder)
+      #la sessione non ha precedenti analisi, e contiene i file per l'analisi necessari
+      Analyzed_files_notPresent = ('Analyzed_data' not in os.listdir())
+      Necessary_files_present = any(file.endswith('.npy') for file in os.listdir()) and any(file.endswith('.xlsx') for file in os.listdir())
+      if not(Necessary_files_present):
+        print("\033[1mRequired files not found - session "+ session_name+"\033[0m")
+      else:
+        if (Analyzed_files_notPresent or Force_reanalysis):
+          print("\033[1mAnalyzing session "+ session_name+"\033[0m")
+          if Force_reanalysis and not(Analyzed_files_notPresent):
+            shutil.rmtree(Session_folder+'Analyzed_data/')
+            shutil.rmtree(Session_folder+'Plots/')
+
+          df, StimVec = Df_loader_and_StimVec(Session_folder)
+
+          F = np.load('F.npy')
+          Fneu = np.load('Fneu.npy')
+          iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
+          F = F[iscell[:,0]==1,:len(StimVec)]
+          Fneu = Fneu[iscell[:,0]==1,:len(StimVec)]
+          F_neuSubtract = F - 0.7*Fneu
+          F_neuSubtract[F_neuSubtract<0]=0
+
+          os.makedirs(Session_folder+'Analyzed_data/', exist_ok=True); os.chdir(Session_folder+'Analyzed_data/')
+          logical_dict = Create_logical_dict(session_name,StimVec,df)
+          F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
+          DF_F = (F_neuSubtract - F0)/ F0
+          DF_F_zscored = zscore(DF_F, axis=1)  
+
+          Mean_SEM_dict_F_neuSubtract = Create_Mean_SEM_dict(session_name,logical_dict, F_neuSubtract, Fluorescence_type = 'F_neuSubtract')
+          Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
+          cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
+
+          os.makedirs(Session_folder+'Plots/', exist_ok=True); os.chdir(Session_folder+'Plots/')
+          summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
+          summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
 
 def Df_loader_and_StimVec(Session_folder):
   # use the glob module to find the Excel file with the specified extension
@@ -236,4 +291,5 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
   else:
     Cell_Max_dict = np.load(OSI_dict_filename)
   return cell_OSI_dict
+
 
