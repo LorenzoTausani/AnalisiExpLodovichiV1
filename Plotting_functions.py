@@ -225,7 +225,7 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='
   plot_cell_tuning(cell_OSI_dict, sorted_idxs[-4], Cell_Max_dict, y_range=[], ax=ax6)
 
   plt.subplots_adjust(hspace=0.3,wspace=0.2)
-  plt.savefig(session_name+'_'+Fluorescence_type+'_avgActivity.png')
+  plt.savefig(session_name+'_'+Fluorescence_type+'_OSI.png')
   plt.show()
 
 def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_F_zscored'):
