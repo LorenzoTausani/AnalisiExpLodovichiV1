@@ -206,7 +206,7 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name, stat =[], Fluoresc
   sorted_idxs = sorted_idxs[:np.argmax(sorted_idxs==Best)+1]
 
   fig = plt.figure(layout="constrained")
-  fig = plt.figure(figsize=(25, 10))
+  fig = plt.figure(figsize=(50, 20))
   gs = GridSpec(2, 2, figure=fig)
   ax1 = fig.add_subplot(gs[0, :-1])
   cumulativePlot_OSI(OSI_v, ax=ax1)
@@ -240,7 +240,7 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name, stat =[], Fluoresc
 
 def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_F_zscored'):
 
-  fig = plt.figure(figsize=(25, 10))
+  fig = plt.figure(figsize=(50, 20))
   gs = GridSpec(2, 3, figure=fig)
   ax1 = fig.add_subplot(gs[0, :-1])
   Plot_AvgOrientations(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax1)
