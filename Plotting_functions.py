@@ -178,7 +178,7 @@ def cumulativePlot_OSI(OSI_v, ax=[]):
 
 def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   OSI_idx05 = OSI_v>0.5
-  PrefOr = np.array(cell_OSI_dict['PrefOr'])
+  PrefOr = cell_OSI_dict['PrefOr']
   PrefOr05 = PrefOr[OSI_idx05,0]
   # Get the counts of unique lists
   unique_lists, counts = np.unique(PrefOr05, return_counts=True)

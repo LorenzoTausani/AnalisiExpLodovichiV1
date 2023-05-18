@@ -115,9 +115,11 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
   
   if not(isinstance(averaging_window, str)):
       averaging_window = str(averaging_window)
-  Cell_max_dict_filename = session_name+Fluorescence_type+'_Cell_max_dict_'+averaging_window+'.npz'
+  Cell_max_dict_filename = session_name+'_'+Fluorescence_type+'_Cell_max_dict_'+averaging_window+'.npz'
   if not(os.path.isfile(Cell_max_dict_filename)):
     Cell_Max_dict = {}
+    Cell_Max_dict['Fluorescence_type']=Fluorescence_type
+    Cell_Max_dict['averaging_window']=averaging_window
     numeric_keys, numeric_keys_int = get_orientation_keys(logical_dict)
 
     for i, key in enumerate(numeric_keys): #per ogni orientamento...
@@ -200,34 +202,38 @@ def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa
   return OSI_arr,preferred_or_list
 
 
-def Create_OSI_dict(Cell_Max_dict,F_neuSubtract,OSI_alternative=True):
-  nr_cells = F_neuSubtract.shape[0]
-  if OSI_alternative:
-    OSI_v = np.full((nr_cells,3), np.nan)
-    PrefOr_v = []   
-  else:
-    OSI_v = np.full((nr_cells), np.nan)
-    PrefOr_v = np.full((nr_cells), np.nan)
-  numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
-  idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6]
-
-  cell_OSI_dict ={}
-  for cell_id in range(nr_cells):
-    Tuning_curve_avgSem = np.full((2,len(Cell_Max_dict.keys())), np.nan) #len(Cell_Max_dict.keys() = nr of orientations
-
-    for i,key in enumerate(Cell_Max_dict.keys()):
-      Tuning_curve_avgSem[0,i] = np.nanmean(Cell_Max_dict[key][cell_id])
-      Tuning_curve_avgSem[1,i] = SEMf(Cell_Max_dict[key][cell_id])
-    cell_OSI_dict['cell_'+str(cell_id)] = Tuning_curve_avgSem
+def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
+  OSI_dict_filename = session_name+'_'+Cell_Max_dict['Fluorescence_type']+'_OSI_dict_'+Cell_Max_dict['averaging_window']+'.npz'
+  if not(os.path.isfile(OSI_dict_filename)):
+    nr_cells = Cell_Max_dict['0'].shape[0]
     if OSI_alternative:
-       OSI_arr,preferred_or_list = OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int)
-       OSI_v[cell_id,:] = OSI_arr
-       PrefOr_v.append(preferred_or_list)
+      OSI_v = np.full((nr_cells,3), np.nan)
+      PrefOr_v = []   
     else:
-      OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
-      OSI_v[cell_id] = OSI
-      PrefOr_v[cell_id] = preferred_or
-  cell_OSI_dict['OSI'] = OSI_v
-  cell_OSI_dict['PrefOr'] = PrefOr_v
+      OSI_v = np.full((nr_cells), np.nan)
+      PrefOr_v = np.full((nr_cells), np.nan)
+    numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6]
+
+    cell_OSI_dict ={}
+    for cell_id in range(nr_cells):
+      Tuning_curve_avgSem = np.full((2,len(numeric_keys)), np.nan) #len(Cell_Max_dict.keys() = nr of orientations
+
+      for i,key in enumerate(numeric_keys):
+        Tuning_curve_avgSem[0,i] = np.nanmean(Cell_Max_dict[key][cell_id])
+        Tuning_curve_avgSem[1,i] = SEMf(Cell_Max_dict[key][cell_id])
+      cell_OSI_dict['cell_'+str(cell_id)] = Tuning_curve_avgSem
+      if OSI_alternative:
+        OSI_arr,preferred_or_list = OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int)
+        OSI_v[cell_id,:] = OSI_arr
+        PrefOr_v.append(preferred_or_list)
+      else:
+        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
+        OSI_v[cell_id] = OSI
+        PrefOr_v[cell_id] = preferred_or
+    cell_OSI_dict['OSI'] = OSI_v
+    cell_OSI_dict['PrefOr'] = np.array(PrefOr_v)
+  else:
+    Cell_Max_dict = np.load(OSI_dict_filename)
   return cell_OSI_dict
 
