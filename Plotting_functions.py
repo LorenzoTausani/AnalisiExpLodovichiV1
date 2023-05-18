@@ -230,7 +230,7 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='
 
 def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_F_zscored'):
 
-  fig = plt.figure(figsize=(20, 10))
+  fig = plt.figure(figsize=(25, 10))
   gs = GridSpec(2, 3, figure=fig)
   ax1 = fig.add_subplot(gs[0, :-1])
   Plot_AvgOrientations(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax1)
