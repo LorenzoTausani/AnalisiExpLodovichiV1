@@ -26,6 +26,50 @@ def SEMf(Fluorescence_matrix):
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
 
+def single_session_analysis(Session_folder='manual_selection', session_name='none'):
+  if Session_folder=='manual_selection':
+    from google.colab import drive
+    drive.mount('/content/drive')
+
+    Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
+    dir_list = os.listdir(Main_folder)
+    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
+    idx_sbj = int(input('Which subject?\n'+sbj_list))
+
+    sbj_folder = os.path.join(Main_folder,dir_list[idx_sbj])
+    dir_list = os.listdir(sbj_folder)
+    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
+    idx_session = int(input('Which session?\n'+sbj_list))
+    session_name = dir_list[idx_session]
+    Session_folder = os.path.join(sbj_folder,session_name)
+    os.chdir(Session_folder)
+
+  df, StimVec = Df_loader_and_StimVec(Session_folder)
+  F = np.load('F.npy')
+  Fneu = np.load('Fneu.npy')
+  iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
+  F = F[iscell[:,0]==1,:len(StimVec)]
+  Fneu = Fneu[iscell[:,0]==1,:len(StimVec)]
+  F_neuSubtract = F - 0.7*Fneu
+  F_neuSubtract[F_neuSubtract<0]=0
+
+  os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
+  logical_dict = Create_logical_dict(session_name,StimVec,df)
+  F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
+  DF_F = (F_neuSubtract - F0)/ F0
+  DF_F_zscored = zscore(DF_F, axis=1)  
+
+  Mean_SEM_dict_F_neuSubtract = Create_Mean_SEM_dict(session_name,logical_dict, F_neuSubtract, Fluorescence_type = 'F_neuSubtract')
+  Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
+  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
+
+  os.makedirs(Session_folder+'Plots/', exist_ok=True); os.chdir(Session_folder+'Plots/')
+  Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
+  Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
+  
+  if Session_folder=='manual_selection':
+    return locals()
+
 def Analyze_all(Force_reanalysis = True):
   from google.colab import drive
   drive.mount('/content/drive')
@@ -53,29 +97,7 @@ def Analyze_all(Force_reanalysis = True):
             shutil.rmtree(Session_folder+'Analyzed_data/')
             shutil.rmtree(Session_folder+'Plots/')
 
-          df, StimVec = Df_loader_and_StimVec(Session_folder)
-
-          F = np.load('F.npy')
-          Fneu = np.load('Fneu.npy')
-          iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
-          F = F[iscell[:,0]==1,:len(StimVec)]
-          Fneu = Fneu[iscell[:,0]==1,:len(StimVec)]
-          F_neuSubtract = F - 0.7*Fneu
-          F_neuSubtract[F_neuSubtract<0]=0
-
-          os.makedirs(Session_folder+'Analyzed_data/', exist_ok=True); os.chdir(Session_folder+'Analyzed_data/')
-          logical_dict = Create_logical_dict(session_name,StimVec,df)
-          F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
-          DF_F = (F_neuSubtract - F0)/ F0
-          DF_F_zscored = zscore(DF_F, axis=1)  
-
-          Mean_SEM_dict_F_neuSubtract = Create_Mean_SEM_dict(session_name,logical_dict, F_neuSubtract, Fluorescence_type = 'F_neuSubtract')
-          Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
-          cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
-
-          os.makedirs(Session_folder+'Plots/', exist_ok=True); os.chdir(Session_folder+'Plots/')
-          Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
-          Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
+          single_session_analysis(Session_folder=Session_folder, session_name=session_name)
 
 def Df_loader_and_StimVec(Session_folder):
   # use the glob module to find the Excel file with the specified extension
