@@ -74,8 +74,8 @@ def Analyze_all(Force_reanalysis = True):
           cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
 
           os.makedirs(Session_folder+'Plots/', exist_ok=True); os.chdir(Session_folder+'Plots/')
-          summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
-          summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
+          Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
+          Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,Fluorescence_type='F_neuSubtract')
 
 def Df_loader_and_StimVec(Session_folder):
   # use the glob module to find the Excel file with the specified extension
