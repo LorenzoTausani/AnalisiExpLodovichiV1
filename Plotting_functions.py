@@ -186,15 +186,17 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   # Get the counts of unique lists
   unique_lists, counts = np.unique(PrefOr05, return_counts=True)
   unique_strings = unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
-  
+  color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+
   if ax==[]:
     fig, ax = plt.subplots()
-  ax.pie(counts, labels=unique_strings, autopct='%1.1f%%')
+  colors = [color_dict.get(lst, 'gray') for lst in unique_strings]
+  ax.pie(counts, labels=unique_strings, autopct='%1.1f%%', colors=colors)
 
   # Add a title
   ax.set_title('OSI>0.5 cells distribution')
 
-def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='F'):
+def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name, stat =[], Fluorescence_type='F'):
   OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])[:,0]
 
   OSI_v[OSI_v>1]=np.nan
@@ -219,13 +221,18 @@ def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name,Fluorescence_type='
     
   ax4 = fig.add_subplot(gs1[1])
   plot_cell_tuning(cell_OSI_dict, sorted_idxs[-2], Cell_Max_dict, y_range=[], ax=ax4)
+  
+  if not(stat==[]):
+    ax5 = fig.add_subplot(gs[1, 1])
+    ax5.set_aspect('equal', adjustable='box')
+    highOSI_cell_map(stat,OSI_v,cell_OSI_dict,ax=ax5)
+  else:
+    gs2 = gs[1, 1].subgridspec(2, 1, hspace=0.75)
+    ax5 = fig.add_subplot(gs2[0])
+    plot_cell_tuning(cell_OSI_dict, sorted_idxs[-3], Cell_Max_dict, y_range=[], ax=ax5)
 
-  gs2 = gs[1, 1].subgridspec(2, 1, hspace=0.75)
-  ax5 = fig.add_subplot(gs2[0])
-  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-3], Cell_Max_dict, y_range=[], ax=ax5)
-
-  ax6 = fig.add_subplot(gs2[1])
-  plot_cell_tuning(cell_OSI_dict, sorted_idxs[-4], Cell_Max_dict, y_range=[], ax=ax6)
+    ax6 = fig.add_subplot(gs2[1])
+    plot_cell_tuning(cell_OSI_dict, sorted_idxs[-4], Cell_Max_dict, y_range=[], ax=ax6)
 
   plt.subplots_adjust(hspace=0.3,wspace=0.2)
   plt.savefig(session_name+'_'+Fluorescence_type+'_OSI.png')
@@ -246,4 +253,34 @@ def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_
   plt.savefig(session_name+'_'+Fluorescence_type+'_avgActivity.png')
   plt.show()
 
-  
+def highOSI_cell_map(stat,OSI_v,cell_OSI_dict,ax=[]):
+  OSI_idx05 = OSI_v>0.5
+  PrefOr = cell_OSI_dict['PrefOr']
+  PrefOr05 = PrefOr[OSI_idx05,0]
+  stat_OSI05= stat[OSI_v>0.5]
+
+  color_dict = {'[0, 180, 360]': 'blue','[45, 225]': 'orange','[90, 270]': 'green', '[135, 315]': 'red'}
+
+  # Create a black 512x512 background
+  if ax==[]:
+    fig, ax = plt.subplots(figsize=[10,10])
+  ax.set_xlim([0, 512])
+  ax.set_ylim([0, 512])
+  ax.set_facecolor('black')
+
+  # Iterate over the circle centers and radii
+  for idx,cell in enumerate(stat_OSI05):
+      c = copy.deepcopy(cell['med'])
+      c.reverse()
+      r = cell['radius']
+      
+      # Determine the circle color based on the radius
+      color = color_dict[str(PrefOr05[idx])]
+
+      # Create the circle patch with the given center and radius
+      circle = plt.Circle(c, r, color=color)
+
+      # Add the circle to the plot
+      ax.add_artist(circle)
+
+  ax.set_title('OSI>0.5 cells position')
