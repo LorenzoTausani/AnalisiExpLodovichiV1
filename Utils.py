@@ -175,17 +175,20 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
         Mean_SEM_dict = {}
         for key in logical_dict.keys():
             if key in SBAs:
-                Mean = np.mean(Fluorescence[:,logical_dict[key]], axis=0)
-                SEM = SEMf(Fluorescence[:,logical_dict[key]])
-                Mean_SEM = np.column_stack((Mean, SEM))
-                Mean_SEM_dict[key] = Mean_SEM
+                if Fluorescence.shape[1]>= logical_dict[key]:
+                  Mean = np.mean(Fluorescence[:,logical_dict[key]], axis=0)
+                  SEM = SEMf(Fluorescence[:,logical_dict[key]])
+                  Mean_SEM = np.column_stack((Mean, SEM))
+                  Mean_SEM_dict[key] = Mean_SEM
             else:
                 M_inizio_fine = logical_dict[key]
                 stim_lens = M_inizio_fine[:, 1] - M_inizio_fine[:, 0]
                 durata_corretta_stim = int(mode(stim_lens)[0])
                 Betw_cells_mean = np.full((M_inizio_fine.shape[0],durata_corretta_stim), np.nan)
                 for i, row in enumerate(M_inizio_fine):
-                    if np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10:
+                    giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
+                    fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]
+                    if giusta_durata and fluo_registrata:
                         Betw_cells_mean[i,:] = np.mean(Fluorescence[:,row[0]:row[0]+durata_corretta_stim], axis=0)
                         #Nota: è impossibile che due sequenze dello stesso tipo siano adiacenti
                 Mean = np.mean(Betw_cells_mean, axis=0)
@@ -227,7 +230,9 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
         for cell in range(Fluorescence.shape[0]): #per ogni cellula...
             cell_trace = Fluorescence[cell,:] #estraggo l'intera traccia di fluorescenza di quella cellula
             for i, row in enumerate(M_inizio_fine): #per ogni stimolazione con un certo orientamento
-                if np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/20:#se lo stimolo ha la giusta durata
+                giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
+                fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]                
+                if giusta_durata and fluo_registrata:#se lo stimolo ha la giusta durata
                     Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
                     Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
                     Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
