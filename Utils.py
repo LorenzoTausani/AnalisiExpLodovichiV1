@@ -62,7 +62,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     stat = stat[iscell[:,0]==1]
 
   cut = len(StimVec)
-  if Session_folder=='manual_selection':
+  if getoutput:
     plt.plot(np.mean(F,axis = 0))
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     
