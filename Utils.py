@@ -66,10 +66,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     plt.plot(np.mean(F,axis = 0))
     # Show the plot
     plt.show()
-    # Pause for a short period of time
-    plt.pause(1)
-
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
+    StimVec = StimVec[:cut]
+    df = df[df['N_frames']<cut]
+
+
     
 
   F = F[iscell[:,0]==1,:cut]
@@ -180,7 +181,7 @@ def Create_logical_dict(session_name,stimoli,df):
 
     return logical_dict
 
-def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_type = 'F'):
+def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_type = 'F'):
     #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
     Mean_SEM_dict_filename = session_name+Fluorescence_type+'_Mean_SEM_dict.npz'
