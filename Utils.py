@@ -66,12 +66,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     plt.plot(np.mean(F,axis = 0))
     # Show the plot
     plt.show()
+    plt.pause(0.1)
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     StimVec = StimVec[:cut]
     df = df[df['N_frames']<cut]
 
-
-    
 
   F = F[iscell[:,0]==1,:cut]
   Fneu = Fneu[iscell[:,0]==1,:cut]
