@@ -63,12 +63,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
   cut = len(StimVec)
   if getoutput:
-    plt.ion()
     plt.plot(np.mean(F,axis = 0))
+    # Show the plot
     plt.show()
-    plt.ioff()
-    # Wait for button press to continue
-    plt.waitforbuttonpress()
+    # Pause for a short period of time
+    plt.pause(1)
 
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     
