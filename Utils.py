@@ -6,6 +6,7 @@ import glob
 from scipy.stats import mode
 from scipy.stats import zscore
 import shutil
+import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
 
@@ -60,10 +61,17 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
 
-  F = F[iscell[:,0]==1,:len(StimVec)]
-  Fneu = Fneu[iscell[:,0]==1,:len(StimVec)]
+  cut = len(StimVec)
+  if Session_folder=='manual_selection':
+    plt.plot(np.mean(F,axis = 0))
+    cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
+    
+
+  F = F[iscell[:,0]==1,:cut]
+  Fneu = Fneu[iscell[:,0]==1,:cut]
   F_neuSubtract = F - 0.7*Fneu
   F_neuSubtract[F_neuSubtract<0]=0
+
 
   os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
   logical_dict = Create_logical_dict(session_name,StimVec,df)
