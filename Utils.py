@@ -63,7 +63,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
   cut = len(StimVec)
   if getoutput:
+    plt.ion()
     plt.plot(np.mean(F,axis = 0))
+    plt.show()
+    plt.ioff()
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     
 
@@ -75,9 +78,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
   os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
   logical_dict = Create_logical_dict(session_name,StimVec,df)
-  F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
-  DF_F = (F_neuSubtract - F0)/ F0
-  DF_F_zscored = zscore(DF_F, axis=1)  
+  # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
+  # DF_F = (F_neuSubtract - F0)/ F0
+  # DF_F_zscored = zscore(DF_F, axis=1)  
 
   Mean_SEM_dict_F_neuSubtract = Create_Mean_SEM_dict(session_name,logical_dict, F_neuSubtract, Fluorescence_type = 'F_neuSubtract')
   Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
