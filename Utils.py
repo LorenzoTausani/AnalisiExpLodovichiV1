@@ -67,6 +67,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     plt.plot(np.mean(F,axis = 0))
     plt.show()
     plt.ioff()
+    # Wait for button press to continue
+    plt.waitforbuttonpress()
+
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     
 
