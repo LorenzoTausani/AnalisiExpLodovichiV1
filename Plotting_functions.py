@@ -108,21 +108,22 @@ def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F',ax=[]):
   patches = []
 
   for i, key in enumerate(SBAs):
-          mean= Mean_SEM_dict[key][:,0]
-          sem = Mean_SEM_dict[key][:,1]
+          if key in Mean_SEM_dict:
+            mean= Mean_SEM_dict[key][:,0]
+            sem = Mean_SEM_dict[key][:,1]
 
-          # Traccia la linea
-          line, = ax.plot(mean, color=colors[i])
+            # Traccia la linea
+            line, = ax.plot(mean, color=colors[i])
 
-          # Aggiungi la banda di errore shaded
-          upper_bound = mean + sem
-          lower_bound = mean - sem
-          ax.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
-          
-          patch = Patch(facecolor=colors[i])
-          # Aggiungi l'etichetta alla legenda
-          labels.append(key)
-          patches.append(patch)
+            # Aggiungi la banda di errore shaded
+            upper_bound = mean + sem
+            lower_bound = mean - sem
+            ax.fill_between(range(len(mean)), lower_bound, upper_bound, color=colors[i], alpha=0.2)
+            
+            patch = Patch(facecolor=colors[i])
+            # Aggiungi l'etichetta alla legenda
+            labels.append(key)
+            patches.append(patch)
 
 
   # Aggiungi la legenda fuori dal plot
