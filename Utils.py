@@ -175,7 +175,7 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence, Fluorescence_t
         Mean_SEM_dict = {}
         for key in logical_dict.keys():
             if key in SBAs:
-                if Fluorescence.shape[1]>= logical_dict[key]:
+                if Fluorescence.shape[1]>= np.where(logical_dict[key])[0][-1]: #se la traccia è stata tutta registrata
                   Mean = np.mean(Fluorescence[:,logical_dict[key]], axis=0)
                   SEM = SEMf(Fluorescence[:,logical_dict[key]])
                   Mean_SEM = np.column_stack((Mean, SEM))
