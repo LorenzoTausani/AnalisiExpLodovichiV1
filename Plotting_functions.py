@@ -272,8 +272,18 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
     OSI_idx05 = OSI_v > 0.5
     PrefOr = cell_OSI_dict['PrefOr'][:, 0]
 
-    color_dict = {'[0, 180, 360]': 'blue', '[45, 225]': 'orange', '[90, 270]': 'green', '[135, 315]': 'red'}
-
+    Considers_list = False
+    for idx,p_or in enumerate(PrefOr[:,0]):
+      if idx ==0:
+        l = len(p_or)
+      elif not(l==len(p_or)):
+        Considers_list = True
+        break
+    if Considers_list == False:
+      color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+    else:
+      color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+    
     # Create a black 512x512 background
     if ax == []:
         fig, ax = plt.subplots(figsize=[10, 10])
