@@ -246,8 +246,9 @@ def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_
   ax1 = fig.add_subplot(gs[0, :-1])
   Plot_AvgOrientations(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax1)
   # identical to ax1 = plt.subplot(gs.new_subplotspec((0, 0), colspan=3))
-  ax2 = fig.add_subplot(gs[0, -1])
-  Plot_AvgFlash(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax2)
+  if 'gray flash' in Mean_SEM_dict:
+    ax2 = fig.add_subplot(gs[0, -1])
+    Plot_AvgFlash(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax2)
   ax3 = fig.add_subplot(gs[1, :])
   Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = Fluorescence_type,ax=ax3)  
   plt.subplots_adjust(hspace=0.3,wspace=0.75)
