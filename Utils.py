@@ -21,6 +21,8 @@ def get_orientation_keys(Mean_SEM_dict):
 
   return numeric_keys, numeric_keys_int
 
+
+
 def SEMf(Fluorescence_matrix):
    Std = np.nanstd(Fluorescence_matrix, axis=0)
    nr_neurons = Fluorescence_matrix.shape[0] #andrebbe cambiato togliendo i nan
@@ -126,7 +128,25 @@ def Analyze_all(Force_reanalysis = True):
 
           single_session_analysis(Session_folder=Session_folder, session_name=session_name)
 
-def Df_loader_and_StimVec(Session_folder):
+def old_version_df(df):
+    def contains_numeric(string):
+        pattern = r'\d+'
+        if re.search(pattern, string):
+            return True
+        else:
+            return False
+
+    def exclude_chars(string):
+        pattern = r'\.0[+-]'
+        return re.sub(pattern, '', string)
+
+    for idx,lbl in enumerate(df['Orientamenti']):
+        if contains_numeric(lbl):
+            df['Orientamenti'][idx]=exclude_chars(lbl)
+    
+    return df
+
+def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   # use the glob module to find the Excel file with the specified extension
   excel_files = glob.glob(os.path.join(Session_folder, "*.xlsx"))
   #print(excel_files[0])
@@ -138,6 +158,12 @@ def Df_loader_and_StimVec(Session_folder):
     if row['Orientamenti']=='gray':
       orientamento = df['Orientamenti'][it-1]
       df['Orientamenti'][it] = 'gray '+str(orientamento)
+  
+  if not_consider_direction:
+     for stim in df['Orientamenti']:
+        if '+' in stim:
+           df = old_version_df(df)
+           break
 
   # Crea un array vuoto per il vettore di stimoli
   StimVec = np.empty(df['N_frames'].max(), dtype=object)
