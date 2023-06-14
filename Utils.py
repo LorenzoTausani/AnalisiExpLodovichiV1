@@ -299,8 +299,13 @@ def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,
   return OSI, preferred_or
 
 def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa a OSIf
-  degrees_combinations=[[0,4,8],[1,5],[2,6],[3,7]] #i.e. [[0,180,360],[45,225],[90,270],[135,315]]
-  orthogonal_combinations = [[2,6],[3,7],[0,4,8],[1,5]]
+  if len(numeric_keys_int)>8:
+    degrees_combinations=[[0,4,8],[1,5],[2,6],[3,7]] #i.e. [[0,180,360],[45,225],[90,270],[135,315]]
+    orthogonal_combinations = [[2,6],[3,7],[0,4,8],[1,5]]
+  else:
+    degrees_combinations=[[0,4],[1,5],[2,6],[3,7]] #i.e. [[0,180],[45,225],[90,270],[135,315]]
+    orthogonal_combinations = [[2,6],[3,7],[0,4],[1,5]]
+     
   if np.sum(Tuning_curve_avgSem[0,:]<0)>0: #se c'è almeno un valore sotto lo zero...
     Tuning_curve_avgSem[0,:] = Tuning_curve_avgSem[0,:] + np.abs(np.min(Tuning_curve_avgSem[0,:]))
 
