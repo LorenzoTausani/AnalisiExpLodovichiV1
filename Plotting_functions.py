@@ -304,7 +304,10 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
 
         if OSI_idx05[idx] == True:
             # Determine the circle color based on the radius
-            color = color_dict[str(PrefOr[idx])]
+            if Considers_list:
+              color = color_dict[str(PrefOr[idx])]
+            else:
+              color = color_dict[str(list(PrefOr[idx]))]
             # Create the circle patch with the given center and radius
             circle = plt.Circle(c, r, color=color)
             non_grey_circles.append(circle)
