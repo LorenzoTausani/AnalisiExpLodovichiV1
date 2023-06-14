@@ -163,6 +163,7 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
      for stim in df['Orientamenti']:
         if '+' in stim:
            df = old_version_df(df)
+           print('direction is not considered in the analysis')
            break
 
   # Crea un array vuoto per il vettore di stimoli
