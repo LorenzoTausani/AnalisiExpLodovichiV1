@@ -273,7 +273,7 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
     PrefOr = cell_OSI_dict['PrefOr'][:, 0]
 
     Considers_list = False
-    for idx,p_or in enumerate(PrefOr[:,0]):
+    for idx,p_or in enumerate(PrefOr):
       if idx ==0:
         l = len(p_or)
       elif not(l==len(p_or)):
