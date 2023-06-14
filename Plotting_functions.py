@@ -185,9 +185,22 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   PrefOr = cell_OSI_dict['PrefOr']
   PrefOr05 = PrefOr[OSI_idx05,0]
   # Get the counts of unique lists
-  unique_lists, counts = np.unique(PrefOr05, return_counts=True)
-  unique_strings = unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
-  color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+  Considers_list = False
+  for idx,p_or in enumerate(PrefOr05):
+    if idx ==0:
+      l = len(p_or)
+    elif not(l==len(p_or)):
+      Considers_list = True
+      break
+  if Considers_list == False:
+    unique_lists, counts = np.unique(PrefOr05, return_counts=True, axis=0)
+    color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+  else:
+    unique_lists, counts = np.unique(PrefOr05, return_counts=True)
+    color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+
+  unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
+  
 
   if ax==[]:
     fig, ax = plt.subplots()
