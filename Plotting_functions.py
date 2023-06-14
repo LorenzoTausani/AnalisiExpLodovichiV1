@@ -282,6 +282,7 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
     if Considers_list == False:
       color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
     else:
+      print('9 orientations present')
       color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
     
     # Create a black 512x512 background
