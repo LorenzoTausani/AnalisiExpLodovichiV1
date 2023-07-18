@@ -205,7 +205,46 @@ def Create_logical_dict(session_name,stimoli,df):
                     indici_array = np.column_stack((indici_inizio_gruppi, indici_fine_gruppi))
                     logical_dict[str(stim)] = indici_array
 
+        #ora creo le voci integrate
+        ors  = df['Orientamenti'].unique()
+        pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
 
+        new_keys = []
+        for elem in ors:
+            matches = re.findall(pattern, elem)
+            try:
+              matches = matches[0]
+            except:
+              print('')
+            if not(matches == []):
+              new_keys.append(matches)
+
+        new_keys = list(set(new_keys))+['+','-']
+        new_keys =new_keys + ['gray '+ n for n in new_keys]
+
+        for new_key in new_keys:
+          if "+" not in new_key and "-" not in new_key:
+            key_plus = new_key+'+'
+            key_minus = new_key+'-'
+
+            alt_keys = [key_plus, key_minus]
+          elif 'gray' in new_key:
+            alt_keys = [key for key in logical_dict.keys() if 'gray' in key and '+' in key]
+            print(alt_keys)
+          else:
+            alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and '+' in key]
+            print(alt_keys)
+          
+          # Concatenate the arrays vertically (axis=0) to form a single array
+          arrays_list = []
+          for k in alt_keys:
+            arrays_list.append(logical_dict[k])
+          concatenated_array = np.concatenate(arrays_list, axis=0)
+
+          # Sort the rows in ascending order based on the first column (index 0)
+          sorted_array = concatenated_array[np.argsort(concatenated_array[:, 0])]
+          logical_dict[new_key] = sorted_array
+            
         np.savez(logical_dict_filename, **logical_dict)
     else:
         logical_dict = np.load(logical_dict_filename)
