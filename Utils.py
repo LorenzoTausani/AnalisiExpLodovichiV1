@@ -48,11 +48,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     session_name = dir_list[idx_session]
     Session_folder = os.path.join(sbj_folder,session_name)
     os.chdir(Session_folder)
-
     if Force_reanalysis:
-      shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
-      shutil.rmtree(os.path.join(Session_folder,'Plots/'))      
-
+      if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
+        shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
+      if os.path.isdir(os.path.join(Session_folder, 'Plots')):
+        shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
 
   df, StimVec = Df_loader_and_StimVec(Session_folder)
