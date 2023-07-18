@@ -46,22 +46,23 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
     idx_session = int(input('Which session?\n'+sbj_list))
     session_name = dir_list[idx_session]
-    Session_folder = os.path.join(sbj_folder,session_name)
+    Session_folder = os.path.join(sbj_folder,session_name) # Session folder è il path alla sessione di interesse
     os.chdir(Session_folder)
+    #cancella i vari folder
     if Force_reanalysis:
       if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
         shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
       if os.path.isdir(os.path.join(Session_folder, 'Plots')):
         shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
-
-  df, StimVec = Df_loader_and_StimVec(Session_folder)
+  df, StimVec = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
   F = np.load('F.npy')
   Fneu = np.load('Fneu.npy')
   iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
   if getoutput==True: #da rimuovere
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
+
 
   cut = len(StimVec)
   if getoutput:
@@ -72,13 +73,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     StimVec = StimVec[:cut]
     df = df[df['N_frames']<cut]
-
-
   F = F[iscell[:,0]==1,:cut]
   Fneu = Fneu[iscell[:,0]==1,:cut]
   F_neuSubtract = F - 0.7*Fneu
   F_neuSubtract[F_neuSubtract<0]=0
-
 
   os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
   logical_dict = Create_logical_dict(session_name,StimVec,df)
