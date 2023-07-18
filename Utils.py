@@ -154,8 +154,13 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   # Carica il file Excel in un DataFrame
   df = pd.read_excel(excel_files[0])
   #chiamo ogni gray in funzione dell'orientamento precedente
+  def contains_numeric_characters(s):
+    return any(char.isdigit() for char in s)
+
   for it, row in df.iterrows():
-    if row['Orientamenti']=='gray':
+    if contains_numeric_characters(row['Orientamenti']):
+      df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
+    elif row['Orientamenti']=='gray':
       orientamento = df['Orientamenti'][it-1]
       df['Orientamenti'][it] = 'gray '+str(orientamento)
   
