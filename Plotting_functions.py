@@ -9,27 +9,32 @@ import Utils
 from Utils import *
 
 
-def Plot_AvgOrientations(Mean_SEM_dict, Fluorescence_type = 'F',ax=[]):
+def Plot_AvgOrientations(Mean_SEM_dict, Fluorescence_type = 'F',ax=[], ori = '', only_or = False):
+  
+  keys_of_interest = []
+  if only_or == False:
+    for key in Mean_SEM_dict.keys():
+        if key.isnumeric():
+            keys_of_interest.append(int(key))
 
-  numeric_keys = []
-
-  for key in Mean_SEM_dict.keys():
-      if key.isnumeric():
-          numeric_keys.append(int(key))
-
-  numeric_keys = sorted(numeric_keys)
-  numeric_keys = [str(num) for num in numeric_keys]
+    keys_of_interest = sorted(keys_of_interest)
+    keys_of_interest = [str(num) for num in keys_of_interest]
+    if not(ori==''):
+      keys_of_interest = [key + ori for key in keys_of_interest]
+      print(keys_of_interest)
+  else:
+    keys_of_interest = ['+','-']
 
   if ax ==[]:
     # Crea un nuovo plot
     fig, ax = plt.subplots()
 
   # Traccia le linee e le bande di errore per ogni chiave del dizionario
-  colors = cm.jet(np.linspace(0, 1, len(numeric_keys)))
+  colors = cm.jet(np.linspace(0, 1, len(keys_of_interest)))
   labels = []
   patches = []
 
-  for i, key in enumerate(numeric_keys):
+  for i, key in enumerate(keys_of_interest):
         mean_stim = Mean_SEM_dict[key][:,0]
         sem_stim = Mean_SEM_dict[key][:,1]
 
