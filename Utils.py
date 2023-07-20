@@ -35,12 +35,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     getoutput=True
     from google.colab import drive
     drive.mount('/content/drive')
-
+    #ricerda del folder della sessione di interesse
     Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
     dir_list = os.listdir(Main_folder)
     sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
     idx_sbj = int(input('Which subject?\n'+sbj_list))
-
     sbj_folder = os.path.join(Main_folder,dir_list[idx_sbj])
     dir_list = os.listdir(sbj_folder)
     sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
@@ -48,7 +47,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     session_name = dir_list[idx_session]
     Session_folder = os.path.join(sbj_folder,session_name) # Session folder è il path alla sessione di interesse
     os.chdir(Session_folder)
-    #cancella i vari folder
+
+    #se vuoi rianalizzare cancella tutto
     if Force_reanalysis:
       if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
         shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
@@ -77,6 +77,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   Fneu = Fneu[iscell[:,0]==1,:cut]
   F_neuSubtract = F - 0.7*Fneu
   F_neuSubtract[F_neuSubtract<0]=0
+  #normalizzare?
 
   os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
   logical_dict = Create_logical_dict(session_name,StimVec,df)
@@ -221,17 +222,17 @@ def Create_logical_dict(session_name,stimoli,df):
         new_keys =new_keys + ['gray '+ n for n in new_keys]
 
         for new_key in new_keys:
-          if "+" not in new_key and "-" not in new_key:
+          if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
             key_plus = new_key+'+'
             key_minus = new_key+'-'
 
             alt_keys = [key_plus, key_minus]
           elif 'gray' in new_key:
-            alt_keys = [key for key in logical_dict.keys() if 'gray' in key and '+' in key]
-            print(alt_keys)
+            plus_minus = new_key[-1]
+            alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
           else:
-            alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and '+' in key]
-            print(alt_keys)
+            plus_minus = new_key[-1]
+            alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
           
           # Concatenate the arrays vertically (axis=0) to form a single array
           arrays_list = []
