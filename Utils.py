@@ -237,7 +237,10 @@ def Create_logical_dict(session_name,stimoli,df):
           # Concatenate the arrays vertically (axis=0) to form a single array
           arrays_list = []
           for k in alt_keys:
-            arrays_list.append(logical_dict[k])
+            try:
+              arrays_list.append(logical_dict[k])
+            except:
+              print(k+' is missing')
           concatenated_array = np.concatenate(arrays_list, axis=0)
 
           # Sort the rows in ascending order based on the first column (index 0)
