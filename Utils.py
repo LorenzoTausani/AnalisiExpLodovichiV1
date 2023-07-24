@@ -425,3 +425,77 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
   return cell_OSI_dict
 
 
+def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True):
+  #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
+  
+  #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
+
+  if not(isinstance(averaging_window, str)):
+      averaging_window = str(averaging_window)
+  nr_cells = Fluorescence.shape[0]
+  if OSI_alternative:
+    OSI_writing = 'OSI_alt'
+    OSI_v = np.full((nr_cells,3), np.nan)
+    PrefOr_v = []
+  else:
+    Pl180yn = int(input('do you want to consider also the parallel orientation? (1=y,0=n)'))
+    OSI_writing = 'OSI_classic' + ('+180' if Pl180yn == 1 else '')
+    OSI_v = np.full((nr_cells), np.nan)
+    PrefOr_v = np.full((nr_cells), np.nan)
+  Cell_stat_dict_filename = session_name+'_'+Fluorescence_type+'_Cell_stat_dict_'+averaging_window+OSI_writing+'.npz'
+  if not(os.path.isfile(Cell_stat_dict_filename)):
+    Cell_stat_dict = {}
+    Cell_stat_dict['Fluorescence_type']=Fluorescence_type
+    Cell_stat_dict['averaging_window']=averaging_window
+    numeric_keys, numeric_keys_int = get_orientation_keys(logical_dict)
+
+    for i, key in enumerate(numeric_keys): #per ogni orientamento...
+        M_inizio_fine = logical_dict[key] #seleziona l'array con i tempi di inizio e quelli di fine
+        stim_lens = M_inizio_fine[:, 1] - M_inizio_fine[:, 0] #calcola la durata di ciascun periodo di stimolazione con l'orientamento di interesse
+        durata_corretta_stim = int(mode(stim_lens)[0])
+        if averaging_window =='mode':
+            averaging_window = durata_corretta_stim #la durata corretta dello stimolo è assunto essere la moda delle durate
+        else:
+            averaging_window = int(averaging_window)
+
+        # nr. cellule x nr stimolazioni con un certo orientamento
+        Cells_maxs = np.full((nr_cells,M_inizio_fine.shape[0]), np.nan)
+        for cell in range(nr_cells): #per ogni cellula...
+            cell_trace = Fluorescence[cell,:] #estraggo l'intera traccia di fluorescenza di quella cellula
+            for i, row in enumerate(M_inizio_fine): #per ogni stimolazione con un certo orientamento
+                giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
+                fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]                
+                if giusta_durata and fluo_registrata:#se lo stimolo ha la giusta durata
+                    Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
+                    Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+        Cell_stat_dict[key] = Cells_maxs
+
+
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6] #si potrebbe forse calcolare in un modo più intelligente
+    Cell_ori_tuning_curve_mean = np.full((nr_cells,len(numeric_keys)), np.nan) #len(Cell_stat_dict.keys() = nr of orientations
+    Cell_ori_tuning_curve_sem = np.full((nr_cells,len(numeric_keys)), np.nan)
+
+    for cell_id in range(nr_cells):
+      Tuning_curve_avgSem = np.full((2,len(numeric_keys)), np.nan) #len(Cell_Max_dict.keys() = nr of orientations
+      for i,key in enumerate(numeric_keys):
+        Cell_ori_tuning_curve_mean[cell_id,i] = np.nanmean(Cell_stat_dict[key][cell_id])
+        Cell_ori_tuning_curve_sem[cell_id,i] = SEMf(Cell_stat_dict[key][cell_id])
+      Tuning_curve_avgSem[0,:]=Cell_ori_tuning_curve_mean[cell_id,:]
+      Tuning_curve_avgSem[1,:]=Cell_ori_tuning_curve_sem[cell_id,:]
+      if OSI_alternative:
+        OSI_arr,preferred_or_list = OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int)
+        OSI_v[cell_id,:] = OSI_arr
+        PrefOr_v.append(preferred_or_list)
+      else:
+        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = Pl180yn)
+        OSI_v[cell_id] = OSI
+        PrefOr_v[cell_id] = preferred_or
+    Cell_stat_dict['Cell_ori_tuning_curve_mean'] = Cell_ori_tuning_curve_mean
+    Cell_stat_dict['Cell_ori_tuning_curve_sem'] = Cell_ori_tuning_curve_sem
+    Cell_stat_dict['OSI'] = OSI_v
+    Cell_stat_dict['PrefOr'] = np.array(PrefOr_v)
+    np.savez(Cell_stat_dict_filename, **Cell_stat_dict)
+  else:
+    Cell_stat_dict = np.load(Cell_stat_dict_filename)
+  return Cell_stat_dict
