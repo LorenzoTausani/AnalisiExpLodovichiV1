@@ -157,8 +157,11 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
     return any(char.isdigit() for char in s)
 
   for it, row in df.iterrows():
-    if contains_numeric_characters(row['Orientamenti']):
-      df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
+    if contains_numeric_characters(str(row['Orientamenti'])):
+      if str(row['Orientamenti'])[-1]=='+' or str(row['Orientamenti'])[-1]=='-': 
+        df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
+      else:
+        df['Orientamenti'][it] = str(row['Orientamenti'])
     elif row['Orientamenti']=='gray':
       orientamento = df['Orientamenti'][it-1]
       df['Orientamenti'][it] = 'gray '+str(orientamento)
@@ -186,6 +189,11 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
 
 
 def Create_logical_dict(session_name,stimoli,df):
+    def contains_plus_character(vector): #function to check if any element of df['Orientamenti'].unique() contains a '+' sign
+      for string in vector:
+          if '+' in string:
+              return True
+      return False
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
     logical_dict_filename = session_name+'_logical_dict.npz'
     if not(os.path.isfile(logical_dict_filename)):
@@ -204,48 +212,49 @@ def Create_logical_dict(session_name,stimoli,df):
                     indici_array = np.column_stack((indici_inizio_gruppi, indici_fine_gruppi))
                     logical_dict[str(stim)] = indici_array
 
-        #ora creo le voci integrate
-        ors  = df['Orientamenti'].unique()
-        pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
+        if contains_plus_character(df['Orientamenti'].unique()):
+          #ora creo le voci integrate
+          ors  = df['Orientamenti'].unique()
+          pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
 
-        new_keys = []
-        for elem in ors:
-            matches = re.findall(pattern, elem)
-            try:
-              matches = matches[0]
-            except:
-              print('')
-            if not(matches == []):
-              new_keys.append(matches)
+          new_keys = []
+          for elem in ors:
+              matches = re.findall(pattern, elem)
+              try:
+                matches = matches[0]
+              except:
+                print('')
+              if not(matches == []):
+                new_keys.append(matches)
 
-        new_keys = list(set(new_keys))+['+','-']
-        new_keys =new_keys + ['gray '+ n for n in new_keys]
+          new_keys = list(set(new_keys))+['+','-']
+          new_keys =new_keys + ['gray '+ n for n in new_keys]
 
-        for new_key in new_keys:
-          if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
-            key_plus = new_key+'+'
-            key_minus = new_key+'-'
+          for new_key in new_keys:
+            if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
+              key_plus = new_key+'+'
+              key_minus = new_key+'-'
 
-            alt_keys = [key_plus, key_minus]
-          elif 'gray' in new_key:
-            plus_minus = new_key[-1]
-            alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
-          else:
-            plus_minus = new_key[-1]
-            alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
-          
-          # Concatenate the arrays vertically (axis=0) to form a single array
-          arrays_list = []
-          for k in alt_keys:
-            try:
-              arrays_list.append(logical_dict[k])
-            except:
-              print(k+' is missing')
-          concatenated_array = np.concatenate(arrays_list, axis=0)
+              alt_keys = [key_plus, key_minus]
+            elif 'gray' in new_key:
+              plus_minus = new_key[-1]
+              alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
+            else:
+              plus_minus = new_key[-1]
+              alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
+            
+            # Concatenate the arrays vertically (axis=0) to form a single array
+            arrays_list = []
+            for k in alt_keys:
+              try:
+                arrays_list.append(logical_dict[k])
+              except:
+                print(k+' is missing')
+            concatenated_array = np.concatenate(arrays_list, axis=0)
 
-          # Sort the rows in ascending order based on the first column (index 0)
-          sorted_array = concatenated_array[np.argsort(concatenated_array[:, 0])]
-          logical_dict[new_key] = sorted_array
+            # Sort the rows in ascending order based on the first column (index 0)
+            sorted_array = concatenated_array[np.argsort(concatenated_array[:, 0])]
+            logical_dict[new_key] = sorted_array
             
         np.savez(logical_dict_filename, **logical_dict)
     else:

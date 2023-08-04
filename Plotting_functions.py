@@ -330,3 +330,19 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
         ax.add_artist(circle)
 
     ax.set_title('OSI>0.5 cells position')
+
+#da sistemare
+def plot_stim_cellwise(logical_dict, Fluorescence,Cell_stat_dict, cell_id):
+  Fcell = Fluorescence[cell_id,:]
+  Pref_ori_cell = Cell_stat_dict['PrefOr'][cell_id][0]
+
+  ori = input('which orientation? (pref or is '+str(Pref_ori_cell)+', OSI is '+str(Cell_stat_dict['OSI'][cell_id,0])+')')
+  timestamps_ori = logical_dict[ori]
+  for ts in timestamps_ori:
+    stim_dur = ts[1]-ts[0]
+    plt.axvline(x=stim_dur, color='r', linestyle='--')
+    plt.axvline(x=2*stim_dur, color='r', linestyle='--')
+    ts[0] = ts[0] - stim_dur
+    ts[1] = ts[1] + stim_dur
+    plt.plot(Fcell[ts[0]:ts[1]])
+
