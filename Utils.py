@@ -445,6 +445,7 @@ def trace_good(Fluorescence):
       STDs_Q1.append(np.std(dati_primo_quartile))
     STDs_Q1 = np.array(STDs_Q1)
     metrica = quartile_99/STDs_Q1
+    metrica[metrica==np.Inf] =0
     return metrica
 
 def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True):
@@ -468,6 +469,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
     Cell_stat_dict = {}
     Cell_stat_dict['Fluorescence_type']=Fluorescence_type
     Cell_stat_dict['averaging_window']=averaging_window
+    Cell_stat_dict['Trace_goodness_metric'] = trace_good(Fluorescence)
     numeric_keys, numeric_keys_int = get_orientation_keys(logical_dict)
 
     for i, key in enumerate(numeric_keys): #per ogni orientamento...
