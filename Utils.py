@@ -332,7 +332,10 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
                     Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
                     Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
                     #Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
-                    Cells_maxs[cell,i] = Avg_stim
+                    #Cells_maxs[cell,i] = Avg_stim
+                    Min = np.min(cell_trace[row[0]:(row[0]+averaging_window)])
+                    Max = np.max(cell_trace[row[0]:(row[0]+averaging_window)])
+                    Cells_maxs[cell,i] = (Min-Max)/(Min+Max)
         Cell_Max_dict[key] = Cells_maxs
     np.savez(Cell_max_dict_filename, **Cell_Max_dict)
   else:
