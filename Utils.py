@@ -457,13 +457,12 @@ def trace_good(Fluorescence):
         dati_primo_quartile =  traccia[(traccia <= q25)]
         STDs_Q1.append(np.std(dati_primo_quartile))
       STDs_Q1 = np.array(STDs_Q1)
+      metrica = quartile_99/STDs_Q1
     else:
-      quartile_25 = np.percentile(Fluorescence, 25)
-      quartile_99 = np.percentile(Fluorescence, 99)
-      dati_primo_quartile =  Fluorescence[(Fluorescence <= quartile_25)]
-      STDs_Q1 = np.std(dati_primo_quartile)
+      quartile_5 = np.percentile(Fluorescence, 5)
+      quartile_95 = np.percentile(Fluorescence, 95)
+      metrica = (quartile_95-quartile_5)/quartile_5
 
-    metrica = quartile_99/STDs_Q1
     if len(Fluorescence.shape)>1:
       metrica[metrica==np.Inf] =0
     else:
