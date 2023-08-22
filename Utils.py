@@ -464,7 +464,11 @@ def trace_good(Fluorescence):
       STDs_Q1 = np.std(dati_primo_quartile)
 
     metrica = quartile_99/STDs_Q1
-    metrica[metrica==np.Inf] =0
+    if len(Fluorescence.shape)>1:
+      metrica[metrica==np.Inf] =0
+    else:
+      if metrica==np.Inf:
+         metrica=0
     return metrica
 
 def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True):
