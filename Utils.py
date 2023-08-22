@@ -451,16 +451,18 @@ def trace_good(Fluorescence):
     if len(Fluorescence.shape)>1:
       quartile_25 = np.percentile(Fluorescence, 25,axis=1)
       quartile_99 = np.percentile(Fluorescence, 99,axis=1)
+      STDs_Q1 = []
+      for i,q25 in enumerate(quartile_25):
+        traccia = Fluorescence[i,:]
+        dati_primo_quartile =  traccia[(traccia <= q25)]
+        STDs_Q1.append(np.std(dati_primo_quartile))
+      STDs_Q1 = np.array(STDs_Q1)
     else:
       quartile_25 = np.percentile(Fluorescence, 25)
       quartile_99 = np.percentile(Fluorescence, 99)
-       
-    STDs_Q1 = []
-    for i,q25 in enumerate(quartile_25):
-      traccia = Fluorescence[i,:]
-      dati_primo_quartile =  traccia[(traccia <= q25)]
-      STDs_Q1.append(np.std(dati_primo_quartile))
-    STDs_Q1 = np.array(STDs_Q1)
+      dati_primo_quartile =  Fluorescence[(Fluorescence <= quartile_25)]
+      STDs_Q1 = np.std(dati_primo_quartile)
+
     metrica = quartile_99/STDs_Q1
     metrica[metrica==np.Inf] =0
     return metrica
