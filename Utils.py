@@ -448,8 +448,13 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
 
 
 def trace_good(Fluorescence):
-    quartile_25 = np.percentile(Fluorescence, 25,axis=1)
-    quartile_99 = np.percentile(Fluorescence, 99,axis=1)
+    if len(Fluorescence.shape)>1:
+      quartile_25 = np.percentile(Fluorescence, 25,axis=1)
+      quartile_99 = np.percentile(Fluorescence, 99,axis=1)
+    else:
+      quartile_25 = np.percentile(Fluorescence, 25)
+      quartile_99 = np.percentile(Fluorescence, 99)
+       
     STDs_Q1 = []
     for i,q25 in enumerate(quartile_25):
       traccia = Fluorescence[i,:]
