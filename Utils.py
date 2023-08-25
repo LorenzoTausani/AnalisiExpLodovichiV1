@@ -331,7 +331,11 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
                 giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
                 fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]                
                 if giusta_durata and fluo_registrata:#se lo stimolo ha la giusta durata
-                    Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    #Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    traccia = cell_trace[(row[0]-averaging_window):row[0]]
+                    median_Fluorescence = np.percentile(traccia, 25)
+                    dati_prima_meta =  traccia[(traccia <= median_Fluorescence)]
+                    Avg_PreStim =(np.mean(dati_prima_meta))
                     Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
                     Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
                     Avg_stim_V[cell,i] = Avg_stim 
