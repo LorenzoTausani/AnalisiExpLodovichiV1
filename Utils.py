@@ -85,17 +85,17 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   # DF_F = (F_neuSubtract - F0)/ F0
   # DF_F_zscored = zscore(DF_F, axis=1)  
 
-  Mean_SEM_dict_F_neuSubtract = Create_Mean_SEM_dict(session_name,logical_dict, F_neuSubtract, Fluorescence_type = 'F_neuSubtract')
-  Cell_Max_dict_F_neuSubtract_mode = Create_Cell_max_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract')
-  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F_neuSubtract_mode,session_name)
-  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_neuSubtract, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=True)
+  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F, Fluorescence_type = 'F')
+  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F, session_name, averaging_window ='mode', Fluorescence_type='F')
+  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name)
+  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True)
 
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
-  Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F_neuSubtract,session_name, Fluorescence_type = 'F_neuSubtract')
+  Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F')
   if getoutput==True: #da rimouovere
-    Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,stat=stat,Fluorescence_type='F_neuSubtract')
+    Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
   else:
-    Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F_neuSubtract_mode,session_name,stat=[],Fluorescence_type='F_neuSubtract')
+    Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=[],Fluorescence_type='F')
   if getoutput:
     return locals()
 
