@@ -178,15 +178,15 @@ def cumulativePlot_OSI(OSI_v, ax=[]):
   ax.set_xlabel('OSI')
   ax.set_ylabel('Cumulative probability')
   ax.set_xlim([0,1])
-  perc_above05 = (np.sum(sorted_OSI_v>=0.5)/len(sorted_OSI_v))*100
-  ax.set_title('OSI>0.5: '+str(np.sum(sorted_OSI_v>=0.5))+'/'+str(len(sorted_OSI_v))+' cells ('+str(np.round(perc_above05,decimals=2))+' %)')
+  perc_above05 = (np.sum(sorted_OSI_v>=0.4)/len(sorted_OSI_v))*100
+  ax.set_title('OSI>0.4: '+str(np.sum(sorted_OSI_v>=0.4))+'/'+str(len(sorted_OSI_v))+' cells ('+str(np.round(perc_above05,decimals=2))+' %)')
 
 
   # Draw a vertical line at x=2
-  ax.axvline(x=0.5, color='red')
+  ax.axvline(x=0.4, color='red')
 
 def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
-  OSI_idx05 = OSI_v>0.5
+  OSI_idx05 = OSI_v>0.4
   PrefOr = cell_OSI_dict['PrefOr']
   PrefOr05 = PrefOr[OSI_idx05,0]
   # Get the counts of unique lists
@@ -213,7 +213,7 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   ax.pie(counts, labels=unique_strings, autopct='%1.1f%%', colors=colors)
 
   # Add a title
-  ax.set_title('OSI>0.5 cells distribution')
+  ax.set_title('OSI>0.4 cells distribution')
 
 def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name, stat =[], Fluorescence_type='F'):
   OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])[:,0]
@@ -274,7 +274,7 @@ def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_
   plt.show()
 
 def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
-    OSI_idx05 = OSI_v > 0.5
+    OSI_idx05 = OSI_v > 0.4
     PrefOr = cell_OSI_dict['PrefOr'][:, 0]
 
     Considers_list = False
@@ -329,7 +329,7 @@ def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
     for circle in non_grey_circles:
         ax.add_artist(circle)
 
-    ax.set_title('OSI>0.5 cells position')
+    ax.set_title('OSI>0.4 cells position')
 
 #da sistemare
 def plot_stim_cellwise(logical_dict, Fluorescence,Cell_stat_dict, cell_id):
