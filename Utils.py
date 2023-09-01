@@ -300,9 +300,9 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_
 
 def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F'):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
-  
+
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
-  
+
   if not(isinstance(averaging_window, str)):
       averaging_window = str(averaging_window)
   Cell_max_dict_filename = session_name+'_'+Fluorescence_type+'_Cell_max_dict_'+averaging_window+'.npz'
@@ -329,33 +329,34 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
             cell_trace = Fluorescence[cell,:] #estraggo l'intera traccia di fluorescenza di quella cellula
             for i, row in enumerate(M_inizio_fine): #per ogni stimolazione con un certo orientamento
                 giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
-                fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]                
+                fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]
                 if giusta_durata and fluo_registrata:#se lo stimolo ha la giusta durata
-                    #Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
-                    traccia = cell_trace[(row[0]-averaging_window):row[0]]
-                    median_Fluorescence = np.percentile(traccia, 50)
-                    dati_prima_meta =  traccia[(traccia <= median_Fluorescence)]
-                    Avg_PreStim =(np.mean(dati_prima_meta))
-                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
-                    Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
-                    Avg_stim_V[cell,i] = Avg_stim 
-                    Avg_PreStim_V[cell,i] = Avg_PreStim 
-                    # Cells_maxs[cell,i] = Avg_stim
+                    Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    # COMMENTATO CI SONO I METODI ALTERNATIVI PER CALCOLO DELL'OSI PROVATI
+                    # traccia = cell_trace[(row[0]-averaging_window):row[0]]
+                    # median_Fluorescence = np.percentile(traccia, 50)
+                    # dati_prima_meta =  traccia[(traccia <= median_Fluorescence)]
+                    # Avg_PreStim =(np.mean(dati_prima_meta))
                     # Min = np.min(cell_trace[(row[0]-averaging_window):row[0]])
                     # Max = np.max(cell_trace[(row[0]-averaging_window):row[0]])
                     # Cells_maxs[cell,i] = (Max-Min)/Min
                     #Cells_maxs[cell,i] = trace_good(cell_trace[row[0]:(row[0]+averaging_window)])
+                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
+                    #Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+                    Avg_stim_V[cell,i] = Avg_stim
+                    Avg_PreStim_V[cell,i] = Avg_PreStim
+                    Cells_maxs[cell,i] = Avg_stim
+
         Cell_Max_dict[key] = Cells_maxs
         Cell_Max_dict[key+'_PreStim'] = Avg_PreStim_V
         Cell_Max_dict[key+'_Stim'] = Avg_stim_V
 
-    np.savez(Cell_max_dict_filename, **Cell_Max_dict)
   else:
     Cell_Max_dict = np.load(Cell_max_dict_filename)
   return Cell_Max_dict
 
 
-def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6],plus180or = True):
+def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6],plus180or = True):
   
   idx_max = np.nanargmax(Tuning_curve_avgSem[0,:]) #idx with maximum average activity
   preferred_or = numeric_keys_int[idx_max]
