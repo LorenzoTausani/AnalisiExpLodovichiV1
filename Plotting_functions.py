@@ -201,10 +201,12 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
       elif not(l==len(p_or)):
         Considers_list = True
         break
-  else:
-     Considers_list = True
+
   if Considers_list == False:
-    unique_lists, counts = np.unique(PrefOr05, return_counts=True, axis=0)
+    if len(PrefOr05.shape)>1:
+      unique_lists, counts = np.unique(PrefOr05, return_counts=True, axis=0)
+    else:
+     unique_lists, counts = np.unique(PrefOr05, return_counts=True)
     color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
   else:
     unique_lists, counts = np.unique(PrefOr05, return_counts=True)
