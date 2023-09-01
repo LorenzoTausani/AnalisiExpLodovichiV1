@@ -158,7 +158,11 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
   # Add a legend and axis labels
   ax.set_xlabel('Orientation')
   ax.set_ylabel('(Fstim-Fpre)/Fpre')
-  ax.set_title('cell_'+str(cell_id)+', OSI: '+str(np.round(cell_OSI_dict['OSI'][cell_id,0],decimals=2)))
+  if len(cell_OSI_dict['OSI'].shape)>1:
+    OSI_value = cell_OSI_dict['OSI'][cell_id,0]
+  else:
+    OSI_value = cell_OSI_dict['OSI'][cell_id]
+  ax.set_title('cell_'+str(cell_id)+', OSI: '+str(np.round(OSI_value,decimals=2)))
   if y_range!=[]:
     ax.set_ylim(y_range)
   numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
