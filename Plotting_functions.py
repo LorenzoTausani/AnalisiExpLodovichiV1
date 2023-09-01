@@ -216,7 +216,7 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   ax.set_title('OSI>0.4 cells distribution')
 
 def summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict,session_name, stat =[], Fluorescence_type='F'):
-  if len(cell_OSI_dict['OSI'].shape())>1:
+  if len(cell_OSI_dict['OSI'].shape)>1:
     OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])[:,0]
   else:
     OSI_v = copy.deepcopy(cell_OSI_dict['OSI'])
