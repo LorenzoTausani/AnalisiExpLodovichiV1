@@ -207,7 +207,7 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   else:
     unique_lists, counts = np.unique(PrefOr05, return_counts=True)
     color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
-
+  print(unique_lists)
   unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
   
 
