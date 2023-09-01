@@ -215,9 +215,11 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
   else:
     unique_lists, counts = np.unique(PrefOr05, return_counts=True)
     color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
-  print(unique_lists)
-  unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
-  
+
+  if len(unique_lists)>1:
+    unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
+  else:
+    unique_strings=[]
 
   if ax==[]:
     fig, ax = plt.subplots()
@@ -290,11 +292,11 @@ def summaryPlot_AvgActivity(Mean_SEM_dict,session_name, Fluorescence_type = 'DF_
 
 def highOSI_cell_map(stat, OSI_v, cell_OSI_dict, ax=[]):
     OSI_idx05 = OSI_v > 0.4
-    if len(cell_OSI_dict['PrefOr'].shape>1):
+    if len(cell_OSI_dict['PrefOr'].shape)>1:
       PrefOr = cell_OSI_dict['PrefOr'][:, 0]
     else:
       PrefOr = cell_OSI_dict['PrefOr']
-      
+
     Considers_list = False
     if len(PrefOr.shape)>1: #per i primi exps dove c era anche 360 gradi
       for idx,p_or in enumerate(PrefOr):
