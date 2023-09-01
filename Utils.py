@@ -21,6 +21,18 @@ def get_orientation_keys(Mean_SEM_dict):
 
   return numeric_keys, numeric_keys_int
 
+def dF_F_Yuste_method(Fluorescence,timepoint):
+  Frames_10s = 10 * 30
+  traccia = Fluorescence[:,timepoint-Frames_10s:timepoint]
+  median_Fluorescence = np.percentile(traccia, 50,axis=1)
+  Avg_first50 = []
+  for i,q25 in enumerate(median_Fluorescence):
+    traccia = Fluorescence[i,timepoint-Frames_10s:timepoint]
+    dati_prima_meta =  traccia[(traccia <= q25)]
+    Avg_first50.append(np.mean(dati_prima_meta))
+  Avg_first50 = np.array(Avg_first50)
+  dF_F_Yuste_timepoint = (Fluorescence[:,timepoint]-Avg_first50)/Avg_first50
+  return dF_F_Yuste_timepoint
 
 
 def SEMf(Fluorescence_matrix):
@@ -84,11 +96,22 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
   # DF_F = (F_neuSubtract - F0)/ F0
   # DF_F_zscored = zscore(DF_F, axis=1)  
+  F_to_use = F
+  Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
+  if Yuste_yn == 1:
+    dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
+    for i in range(F.shape[1]):
+      if i>=300:
+        c=i-300
+        dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
+    dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
+    F_to_use = dF_F_Yuste
 
-  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F, Fluorescence_type = 'F')
-  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F, session_name, averaging_window ='mode', Fluorescence_type='F')
+  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F')
+  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F')
   cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name)
-  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True)
+  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True)
+  
 
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
   Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F')
