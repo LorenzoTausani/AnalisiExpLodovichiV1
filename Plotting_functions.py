@@ -194,7 +194,7 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
     PrefOr05 = PrefOr[OSI_idx05]
   # Get the counts of unique lists
   Considers_list = False
-  if len(PrefOr05.shape)>1:
+  if len(PrefOr05.shape)>1: #per i primi exps dove c era anche 360 gradi
     for idx,p_or in enumerate(PrefOr05):
       if idx ==0:
         l = len(p_or)
