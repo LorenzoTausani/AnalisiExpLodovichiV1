@@ -379,7 +379,7 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
   return Cell_Max_dict
 
 
-def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6],plus180or = True):
+def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6],plus180or = False):
   
   idx_max = np.nanargmax(Tuning_curve_avgSem[0,:]) #idx with maximum average activity
   preferred_or = numeric_keys_int[idx_max]
@@ -439,7 +439,7 @@ def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa
   return OSI_arr,preferred_or_list
 
 
-def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
+def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=False):
   OSI_dict_filename = session_name+'_'+str(Cell_Max_dict['Fluorescence_type'])+'_OSI_dict_'+str(Cell_Max_dict['averaging_window'])+'.npz'
   if not(os.path.isfile(OSI_dict_filename)):
     nr_cells = Cell_Max_dict['0'].shape[0]
@@ -450,7 +450,7 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
       OSI_v = np.full((nr_cells), np.nan)
       PrefOr_v = np.full((nr_cells), np.nan)
     numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
-    idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6]
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6] #8 solo per le prime sessioni. Da aggiustare
 
     cell_OSI_dict ={}
     for cell_id in range(nr_cells):
@@ -465,7 +465,7 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
         OSI_v[cell_id,:] = OSI_arr
         PrefOr_v.append(preferred_or_list)
       else:
-        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
+        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = False)
         OSI_v[cell_id] = OSI
         PrefOr_v[cell_id] = preferred_or
     cell_OSI_dict['OSI'] = OSI_v
@@ -475,7 +475,7 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=True):
   return cell_OSI_dict
 
 
-def trace_good(Fluorescence):
+def trace_good(Fluorescence): #rimetti a posto come una volta
     if len(Fluorescence.shape)>1:
       quartile_25 = np.percentile(Fluorescence, 25,axis=1)
       quartile_99 = np.percentile(Fluorescence, 99,axis=1)
