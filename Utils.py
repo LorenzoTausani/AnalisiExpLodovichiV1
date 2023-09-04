@@ -110,7 +110,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F')
   Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F')
   cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name)
-  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True)
+  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=False)
   
 
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
@@ -510,7 +510,8 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
     OSI_v = np.full((nr_cells,3), np.nan)
     PrefOr_v = []
   else:
-    Pl180yn = int(input('do you want to consider also the parallel orientation? (1=y,0=n)'))
+    #Pl180yn = int(input('do you want to consider also the parallel orientation? (1=y,0=n)'))
+    Pl180yn = 0
     OSI_writing = 'OSI_classic' + ('+180' if Pl180yn == 1 else '')
     OSI_v = np.full((nr_cells), np.nan)
     PrefOr_v = np.full((nr_cells), np.nan)
@@ -545,7 +546,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
         Cell_stat_dict[key] = Cells_maxs
 
 
-    idxs_4orth_ori = [0,1,2,3,4,5,6,7,8,1,2,3,4,5,6] #si potrebbe forse calcolare in un modo più intelligente
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6] #si potrebbe forse calcolare in un modo più intelligente
     Cell_ori_tuning_curve_mean = np.full((nr_cells,len(numeric_keys)), np.nan) #len(Cell_stat_dict.keys() = nr of orientations
     Cell_ori_tuning_curve_sem = np.full((nr_cells,len(numeric_keys)), np.nan)
 
