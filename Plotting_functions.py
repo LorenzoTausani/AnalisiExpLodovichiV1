@@ -169,6 +169,33 @@ def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
   xticks = list(numeric_keys)
   ax.set_xticks(range(len(xticks)), xticks)
 
+def plot_cell_tuning2(Cell_stat_dict, cell_id, y_range=[], ax=[]):
+  
+  Tuning_curve_avg = Cell_stat_dict['Cell_ori_tuning_curve_mean'][cell_id,:]
+  Tuning_curve_sem = Cell_stat_dict['Cell_ori_tuning_curve_sem'][cell_id,:]
+  x = np.arange(len(Tuning_curve_avg))
+  if ax ==[]:
+    fig, ax = plt.subplots()
+  # Plot the mean values as a line
+  ax.plot(x, Tuning_curve_avg, color='purple', label='mean')
+
+  # Plot the standard error as a shaded region
+  ax.fill_between(x, Tuning_curve_avg - Tuning_curve_sem, Tuning_curve_avg + Tuning_curve_sem, color='purple', alpha=0.2, label='standard error')
+
+  # Add a legend and axis labels
+  ax.set_xlabel('Orientation')
+  ax.set_ylabel('(Fstim-Fpre)/Fpre')
+  if len(Cell_stat_dict['OSI'].shape)>1:
+    OSI_value = Cell_stat_dict['OSI'][cell_id,0]
+  else:
+    OSI_value = Cell_stat_dict['OSI'][cell_id]
+  ax.set_title('cell_'+str(cell_id)+', OSI: '+str(np.round(OSI_value,decimals=2)))
+  if y_range!=[]:
+    ax.set_ylim(y_range)
+  numeric_keys, numeric_keys_int = get_orientation_keys(Cell_stat_dict)
+  xticks = list(numeric_keys)
+  ax.set_xticks(range(len(xticks)), xticks)
+
 def cumulativePlot_OSI(OSI_v, ax=[]):
   sorted_OSI_v = np.sort(OSI_v)
 
@@ -189,13 +216,16 @@ def cumulativePlot_OSI(OSI_v, ax=[]):
   # Draw a vertical line at x=2
   ax.axvline(x=0.4, color='red')
 
-def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
-  OSI_idx05 = OSI_v>0.4
+def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[], only_highOSI=True):
   PrefOr = cell_OSI_dict['PrefOr']
-  if len(cell_OSI_dict['PrefOr'].shape)>1:
-    PrefOr05 = PrefOr[OSI_idx05,0]
+  if only_highOSI:
+    OSI_idx05 = OSI_v>0.4
+    if len(cell_OSI_dict['PrefOr'].shape)>1:
+      PrefOr05 = PrefOr[OSI_idx05,0]
+    else:
+      PrefOr05 = PrefOr[OSI_idx05]
   else:
-    PrefOr05 = PrefOr[OSI_idx05]
+    PrefOr05 = PrefOr
   # Get the counts of unique lists
   Considers_list = False
   if len(PrefOr05.shape)>1: #per i primi exps dove c era anche 360 gradi
@@ -211,15 +241,21 @@ def Orientation_freq_plot(OSI_v, cell_OSI_dict, ax=[]):
       unique_lists, counts = np.unique(PrefOr05, return_counts=True, axis=0)
     else:
      unique_lists, counts = np.unique(PrefOr05, return_counts=True)
-    color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+     if isinstance(PrefOr[0], list):
+      color_dict = {'0, 180': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
+     else:
+      color_dict = {'0': 'blue','180': 'blue','45': 'orange','225': 'orange','90': 'green','270': 'green', '135': 'red', '315': 'red'}
   else:
     unique_lists, counts = np.unique(PrefOr05, return_counts=True)
     color_dict = {'0, 180, 360': 'blue','45, 225': 'orange','90, 270': 'green', '135, 315': 'red'}
-
-  if len(unique_lists)>1:
-    unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
+  
+  if isinstance(PrefOr[0], list): 
+    if len(unique_lists)>1:
+      unique_strings = [', '.join(map(str, lst)) for lst in unique_lists]
+    else:
+      unique_strings=[]
   else:
-    unique_strings=[]
+    unique_strings = [str(int(el)) for el in unique_lists]
 
   if ax==[]:
     fig, ax = plt.subplots()
