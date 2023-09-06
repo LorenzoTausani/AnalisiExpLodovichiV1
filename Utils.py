@@ -10,6 +10,7 @@ import shutil
 import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
+import ast
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = []
@@ -125,41 +126,46 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   #if getoutput:
   return locals()
 
-def Analyze_all(Force_reanalysis = True):
+def Analyze_all(Force_reanalysis = True, select_subjects = True):
   from google.colab import drive
   drive.mount('/content/drive')
 
   Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
   os.chdir(Main_folder)
   dir_list = os.listdir(Main_folder)
+  if select_subjects:
+    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
+    idx_sbj = ast.literal_eval(input('Which subjects (write in [])?\n'+sbj_list))
+  else:
+     idx_sbj=range(len(dir_list))
+  for nr,c_dir in enumerate(dir_list):
+    if nr in idx_sbj:
+      Subj_folder = Main_folder+c_dir+'/'
+      os.chdir(Subj_folder)
+      dir_list = os.listdir(Subj_folder)
+      comp_list = []
+      for session_name in dir_list:
+        Session_folder = Subj_folder+session_name+'/'
+        os.chdir(Session_folder)
+        #la sessione non ha precedenti analisi, e contiene i file per l'analisi necessari
+        Analyzed_files_notPresent = ('Analyzed_data' not in os.listdir())
+        Necessary_files_present = any(file.endswith('.npy') for file in os.listdir()) and any(file.endswith('.xlsx') for file in os.listdir())
+        if not(Necessary_files_present):
+          print("\033[1mRequired files not found - session "+ session_name+"\033[0m")
+        else:
+          if (Analyzed_files_notPresent or Force_reanalysis):
+            print("\033[1mAnalyzing session "+ session_name+"\033[0m")
+            if Force_reanalysis and not(Analyzed_files_notPresent):
+              if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
+                shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
+              if os.path.isdir(os.path.join(Session_folder, 'Plots')):
+                shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
-  for c_dir in dir_list:
-    Subj_folder = Main_folder+c_dir+'/'
-    os.chdir(Subj_folder)
-    dir_list = os.listdir(Subj_folder)
-    comp_list = []
-    for session_name in dir_list:
-      Session_folder = Subj_folder+session_name+'/'
-      os.chdir(Session_folder)
-      #la sessione non ha precedenti analisi, e contiene i file per l'analisi necessari
-      Analyzed_files_notPresent = ('Analyzed_data' not in os.listdir())
-      Necessary_files_present = any(file.endswith('.npy') for file in os.listdir()) and any(file.endswith('.xlsx') for file in os.listdir())
-      if not(Necessary_files_present):
-        print("\033[1mRequired files not found - session "+ session_name+"\033[0m")
-      else:
-        if (Analyzed_files_notPresent or Force_reanalysis):
-          print("\033[1mAnalyzing session "+ session_name+"\033[0m")
-          if Force_reanalysis and not(Analyzed_files_notPresent):
-            if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
-              shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
-            if os.path.isdir(os.path.join(Session_folder, 'Plots')):
-              shutil.rmtree(os.path.join(Session_folder,'Plots/'))
-
-          return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name)
-          comp_item = np.zeros(2)
-          comp_item[0] = return_dict['p_value']
-          comp_item[1] = return_dict['perc_diff_wGray2']
-          comp_list.append([session_name,comp_item])
+            return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name)
+            comp_item = np.zeros(2)
+            comp_item[0] = return_dict['p_value']
+            comp_item[1] = return_dict['perc_diff_wGray2']
+            comp_list.append([session_name,comp_item])
 
 
   return comp_list
