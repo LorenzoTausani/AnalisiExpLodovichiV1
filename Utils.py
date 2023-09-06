@@ -138,12 +138,12 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
     idx_sbj = ast.literal_eval(input('Which subjects (write in [])?\n'+sbj_list))
   else:
      idx_sbj=range(len(dir_list))
+  comp_list = []
   for nr,c_dir in enumerate(dir_list):
     if nr in idx_sbj:
       Subj_folder = Main_folder+c_dir+'/'
       os.chdir(Subj_folder)
       dir_list = os.listdir(Subj_folder)
-      comp_list = []
       for session_name in dir_list:
         Session_folder = Subj_folder+session_name+'/'
         os.chdir(Session_folder)
