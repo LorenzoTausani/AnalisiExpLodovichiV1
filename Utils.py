@@ -98,15 +98,16 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   # DF_F = (F_neuSubtract - F0)/ F0
   # DF_F_zscored = zscore(DF_F, axis=1)  
   F_to_use = F
-  Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
-  if Yuste_yn == 1:
-    dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
-    for i in range(F.shape[1]):
-      if i>=300:
-        c=i-300
-        dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
-    dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
-    F_to_use = dF_F_Yuste
+  if getoutput:
+    Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
+    if Yuste_yn == 1:
+      dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
+      for i in range(F.shape[1]):
+        if i>=300:
+          c=i-300
+          dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
+      dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
+      F_to_use = dF_F_Yuste
 
   Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F')
   Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F')
@@ -627,7 +628,6 @@ def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
   plt.ylabel("Fluorescence")
   perc_diff_wGray = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,3])/Activity_arr2[:,3])*100)
   perc_diff_wGray2 = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100)
-  plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
   _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,3], alternative='greater')
   plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
   plt.savefig(session_name+'Fluorescence_periods_comparison.png')
