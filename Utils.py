@@ -150,8 +150,10 @@ def Analyze_all(Force_reanalysis = True):
         if (Analyzed_files_notPresent or Force_reanalysis):
           print("\033[1mAnalyzing session "+ session_name+"\033[0m")
           if Force_reanalysis and not(Analyzed_files_notPresent):
-            shutil.rmtree(Session_folder+'Analyzed_data/')
-            shutil.rmtree(Session_folder+'Plots/')
+            if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
+              shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
+            if os.path.isdir(os.path.join(Session_folder, 'Plots')):
+              shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
           return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name)
           comp_item = np.zeros(2)
