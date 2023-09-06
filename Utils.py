@@ -5,6 +5,7 @@ import pandas as pd
 import glob
 from scipy.stats import mode
 from scipy.stats import zscore
+from scipy import stats
 import shutil
 import matplotlib.pyplot as plt
 import Plotting_functions
@@ -112,8 +113,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name)
   Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=False)
   
-
+ 
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
+  p_value,perc_diff_wGray2 = Comparison_gray_stim(F_to_use, logical_dict,session_name)
   Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F')
   # if getoutput==True: #da rimouovere
   #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
@@ -134,6 +136,7 @@ def Analyze_all(Force_reanalysis = True):
     Subj_folder = Main_folder+c_dir+'/'
     os.chdir(Subj_folder)
     dir_list = os.listdir(Subj_folder)
+    comp_list = []
     for session_name in dir_list:
       Session_folder = Subj_folder+session_name+'/'
       os.chdir(Session_folder)
@@ -149,9 +152,14 @@ def Analyze_all(Force_reanalysis = True):
             shutil.rmtree(Session_folder+'Analyzed_data/')
             shutil.rmtree(Session_folder+'Plots/')
 
-          single_session_analysis(Session_folder=Session_folder, session_name=session_name)
+          return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name)
+          comp_item = np.zeros(2)
+          comp_item[0] = return_dict['p_value']
+          comp_item[1] = return_dict['perc_diff_wGray2']
+          comp_list.append(comp_item)
 
 
+  return comp_list
 
    
 
@@ -581,8 +589,8 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
   return Cell_stat_dict
 
 
-def Comparison_gray_stim(Fluorescence, logical_dict):
-  from scipy import stats
+def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
+  
 
   str_keys, list_keys = get_orientation_keys(logical_dict)
   Activity_arr = np.zeros((Fluorescence.shape[0],100,4))
@@ -607,18 +615,23 @@ def Comparison_gray_stim(Fluorescence, logical_dict):
   Activity_arr2[:] = np.nan
   Activity_arr2[:,0] = np.mean(Fluorescence[:,logical_dict['initial gray']], axis=1)
   Activity_arr2[:,1] = np.mean(Fluorescence[:,logical_dict['final gray']], axis=1)
-  Activity_arr2[:,6:10] = np.nanmean(Activity_arr, axis = 1)
+  Activity_arr2[:,2:6] = np.nanmean(Activity_arr, axis = 1)
   # Step 1: Randomly select 24 unique column indices (5sx24 = 120s)
   selected_columns = np.random.choice(Activity_arr.shape[1]-1, 24, replace=False)
-  Activity_arr2[:,2:6] = np.nanmean(Activity_arr[:, selected_columns], axis=1)     
+  Activity_arr2[:,6:10] = np.nanmean(Activity_arr[:, selected_columns], axis=1)     
   conditions = ["Sp1", "Sp2", "Stim", "Gray", "Gray1", "Gray2"]
   plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
   plt.boxplot(Activity_arr2[:,:6], labels=conditions)
   # Add labels and title
   plt.xlabel("Conditions")
   plt.ylabel("Fluorescence")
-  _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,4], alternative='greater')
-  plt.title("P value "+str(p_value))
+  perc_diff_wGray = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,3])/Activity_arr2[:,3])*100)
+  perc_diff_wGray2 = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100)
+  plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
+  _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,3], alternative='greater')
+  plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
+  plt.savefig(session_name+'Fluorescence_periods_comparison.png')
   plt.show()
 
-  return Activity_arr,Activity_arr2
+  #return Activity_arr,Activity_arr2
+  return p_value,perc_diff_wGray2
