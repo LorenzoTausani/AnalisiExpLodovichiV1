@@ -151,6 +151,10 @@ def Analyze_all(Force_reanalysis = True):
 
           single_session_analysis(Session_folder=Session_folder, session_name=session_name)
 
+
+
+   
+
 def old_version_df(df):
     def contains_numeric(string):
         pattern = r'\d+'
@@ -575,3 +579,46 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
   else:
     Cell_stat_dict = np.load(Cell_stat_dict_filename)
   return Cell_stat_dict
+
+
+def Comparison_gray_stim(Fluorescence, logical_dict):
+  from scipy import stats
+
+  str_keys, list_keys = get_orientation_keys(logical_dict)
+  Activity_arr = np.zeros((Fluorescence.shape[0],100,4))
+  Activity_arr[:] = np.nan
+  
+  for c_ID,cell in enumerate(Fluorescence):
+    pointer=0
+    for i,k in enumerate(str_keys):
+      stim_times = logical_dict[k]
+      for stim in stim_times:
+        Activity_arr[c_ID,pointer,0] = np.mean(cell[stim[0]:stim[1]])
+        pointer+=1
+      pointer = pointer - stim_times.shape[0]
+      stim_times = logical_dict['gray '+k]
+      for c,stim in enumerate(stim_times):
+        Activity_arr[c_ID,pointer,1] = np.mean(cell[stim[0]:stim[1]])
+        Activity_arr[c_ID,pointer,2] = np.mean(cell[stim[0]:stim[0]+150])
+        Activity_arr[c_ID,pointer,3] = np.mean(cell[stim[0]+150:stim[1]])
+        pointer+=1
+
+  Activity_arr2 = np.zeros((Fluorescence.shape[0],10))
+  Activity_arr2[:] = np.nan
+  Activity_arr2[:,0] = np.mean(Fluorescence[:,logical_dict['initial gray']], axis=1)
+  Activity_arr2[:,1] = np.mean(Fluorescence[:,logical_dict['final gray']], axis=1)
+  Activity_arr2[:,6:10] = np.nanmean(Activity_arr, axis = 1)
+  # Step 1: Randomly select 24 unique column indices (5sx24 = 120s)
+  selected_columns = np.random.choice(Activity_arr.shape[1]-1, 24, replace=False)
+  Activity_arr2[:,2:6] = np.nanmean(Activity_arr[:, selected_columns], axis=1)     
+  conditions = ["Sp1", "Sp2", "Stim", "Gray", "Gray1", "Gray2"]
+  plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
+  plt.boxplot(Activity_arr2[:,:6], labels=conditions)
+  # Add labels and title
+  plt.xlabel("Conditions")
+  plt.ylabel("Fluorescence")
+  _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,4], alternative='greater')
+  plt.title("P value "+str(p_value))
+  plt.show()
+
+  return Activity_arr,Activity_arr2
