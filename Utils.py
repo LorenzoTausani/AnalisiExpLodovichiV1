@@ -159,7 +159,7 @@ def Analyze_all(Force_reanalysis = True):
           comp_item = np.zeros(2)
           comp_item[0] = return_dict['p_value']
           comp_item[1] = return_dict['perc_diff_wGray2']
-          comp_list.append(comp_item)
+          comp_list.append([session_name,comp_item])
 
 
   return comp_list
