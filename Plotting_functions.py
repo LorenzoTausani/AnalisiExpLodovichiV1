@@ -403,3 +403,21 @@ def plot_stim_cellwise(logical_dict, Fluorescence,Cell_stat_dict, cell_id):
     ts[1] = ts[1] + stim_dur
     plt.plot(Fcell[ts[0]:ts[1]])
 
+
+#da rifinire
+def plotta_stim_separatamente(Fluoresence,logical_dict):
+  str_keys, list_keys = get_orientation_keys(logical_dict)
+  fig, ax = plt.subplots(nrows=len(str_keys), ncols=1, figsize=(20, 24))
+  color_dict = {'0': 'blue','180': 'blue','45': 'orange','225': 'orange','90': 'green','270': 'green', '135': 'red', '315': 'red'}
+  for i,k in enumerate(str_keys):
+    stim_times = logical_dict[k]
+    stim_array = np.zeros((stim_times.shape[0],600))
+    for c,stim in enumerate(stim_times):
+      stim_array[c,:] = Fluoresence[stim[0]-150:stim[0]+450]
+      ax[i].plot(stim_array[c,:], color=color_dict[k]) #i.e. da 5 s prima dello stimolo a 10s dopo (tot: 20s)
+    ax[i].plot(np.mean(stim_array, axis=0), color='black', linewidth=2)
+    ax[i].set_ylim([0,1.5])
+    ax[i].axvline(x=150, color='black', linestyle='--')
+    ax[i].axvline(x=300, color='black', linestyle='--')
+
+  plt.subplots_adjust(hspace=0.5)
