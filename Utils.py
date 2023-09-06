@@ -122,8 +122,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
   # else:
   #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=[],Fluorescence_type='F')
-  if getoutput:
-    return locals()
+  #if getoutput:
+  return locals()
 
 def Analyze_all(Force_reanalysis = True):
   from google.colab import drive
