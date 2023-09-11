@@ -649,7 +649,7 @@ def compute_correlation(Fluorescence, logical_dict):
     numero_colonne_ts_spezzata = intervalli_logical_dict[:, 1] - intervalli_logical_dict[:, 0] + 1
 
     # Inizializza la nuova matrice con zeri
-    ts_spezzata = np.zeros((Fluorescence.shape[0], np.sum(numero_colonne_nuova_matrice)))
+    ts_spezzata = np.zeros((Fluorescence.shape[0], np.sum(numero_colonne_ts_spezzata)))
 
     # Copia le colonne appropriate dalla matrice originale nella nuova matrice
     indice_colonna_ts_spezzata = 0
