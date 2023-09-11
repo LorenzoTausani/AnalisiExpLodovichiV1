@@ -129,7 +129,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 def Analyze_all(Force_reanalysis = True, select_subjects = True):
   from google.colab import drive
   drive.mount('/content/drive')
-
+  correlation_dict = {}
+  correlation_stats_tensor = None
   Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
   os.chdir(Main_folder)
   dir_list = os.listdir(Main_folder)
@@ -166,9 +167,22 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
             comp_list.append([session_name,comp_item])
+            #vado a raccogliere le statistiche di correlazione che mi interessano
+            correlation_dict[session_name] =compute_correlation(return_dict['F_neuSubtract'], return_dict['logical_dict'])
+            correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
+            for matrix_idx in range(correlation_dict[session_name].shape[0]):
+               correlation_tensor = correlation_dict[session_name][matrix_idx,:,:] #prendo ciascuna delle matrici di correlazione
+               correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(6, k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
+               correlation_stats[matrix_idx,0] = np.mean(correlation_vec_no_symmetry)
+               correlation_stats[matrix_idx,1] = np.std(correlation_vec_no_symmetry)
+            if correlation_stats_tensor is None:
+                correlation_stats_tensor = np.expand_dims(correlation_stats, axis=0)
+            else:
+                correlation_stats = np.expand_dims(correlation_stats, axis=0)
+                correlation_stats_tensor = np.concatenate((correlation_stats_tensor, correlation_stats), axis=0)
 
 
-  return comp_list
+  return comp_list, correlation_stats_tensor
 
    
 
@@ -662,7 +676,7 @@ def compute_correlation(Fluorescence, logical_dict):
 
   keys_of_interest = ['initial gray', 'final gray','+','gray +']
   nr_cells = Fluorescence.shape[0]
-  correlation_tensor = np.zeros(len(keys_of_interest)+1,nr_cells,nr_cells)
+  correlation_tensor = np.zeros((len(keys_of_interest)+1,nr_cells,nr_cells))
   correlation_tensor[0,:,:] = np.corrcoef(Fluorescence)
 
   for idx,key in enumerate(keys_of_interest):
@@ -678,5 +692,5 @@ def compute_correlation(Fluorescence, logical_dict):
       intervalli = np.concatenate((intervalli1, intervalli2), axis=0)
       intervalli = intervalli[intervalli[:,0].argsort()]
       timeseries_of_interest = costruisci_timeseries_spezzata(Fluorescence,intervalli)
-    correlation_tensor[idx,:,:] = np.corrcoef(timeseries_of_interest)
+    correlation_tensor[idx+1,:,:] = np.corrcoef(timeseries_of_interest)
   return correlation_tensor
