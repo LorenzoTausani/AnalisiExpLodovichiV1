@@ -643,3 +643,40 @@ def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
 
   #return Activity_arr,Activity_arr2
   return p_value,perc_diff_wGray2
+
+def compute_correlation(Fluorescence, logical_dict):
+  def costruisci_timeseries_spezzata(Fluorescence,intervalli_logical_dict):
+    numero_colonne_ts_spezzata = intervalli_logical_dict[:, 1] - intervalli_logical_dict[:, 0] + 1
+
+    # Inizializza la nuova matrice con zeri
+    ts_spezzata = np.zeros((Fluorescence.shape[0], np.sum(numero_colonne_nuova_matrice)))
+
+    # Copia le colonne appropriate dalla matrice originale nella nuova matrice
+    indice_colonna_ts_spezzata = 0
+    for row in range(intervalli_logical_dict.shape[0]):
+        start, end = intervalli_logical_dict[row]
+        ts_spezzata[:, indice_colonna_ts_spezzata:indice_colonna_ts_spezzata + (end - start + 1)] = Fluorescence[:, start:end + 1]
+        indice_colonna_ts_spezzata += (end - start + 1)
+    return ts_spezzata 
+
+
+  keys_of_interest = ['initial gray', 'final gray','+','gray +']
+  nr_cells = Fluorescence.shape[0]
+  correlation_tensor = np.zeros(len(keys_of_interest)+1,nr_cells,nr_cells)
+  correlation_tensor[0,:,:] = np.corrcoef(Fluorescence)
+
+  for idx,key in enumerate(keys_of_interest):
+    if key=='initial gray' or key=='final gray':
+      timeseries_of_interest = Fluorescence[:,logical_dict[key]] 
+    else:
+      if key=='+':
+        other_key = '-'
+      else:
+        other_key = 'gray -'
+      intervalli1 = logical_dict[key]
+      intervalli2 = logical_dict[other_key]
+      intervalli = np.concatenate((intervalli1, intervalli2), axis=0)
+      intervalli = intervalli[intervalli[:,0].argsort()]
+      timeseries_of_interest = costruisci_timeseries_spezzata(Fluorescence,intervalli)
+    correlation_tensor[idx,:,:] = np.corrcoef(timeseries_of_interest)
+  return correlation_tensor
