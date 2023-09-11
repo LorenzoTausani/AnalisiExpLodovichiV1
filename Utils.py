@@ -167,6 +167,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
             comp_list.append([session_name,comp_item])
+
             #vado a raccogliere le statistiche di correlazione che mi interessano
             correlation_dict[session_name] =compute_correlation(return_dict['F_neuSubtract'], return_dict['logical_dict'])
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
@@ -180,9 +181,12 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
             else:
                 correlation_stats = np.expand_dims(correlation_stats, axis=0)
                 correlation_stats_tensor = np.concatenate((correlation_stats_tensor, correlation_stats), axis=0)
+  sesson_names = [item[0] for item in comp_list]
+  p_values = [item[1][0] for item in comp_list]
+  Percent_increase = [item[1][1] for item in comp_list]
+  df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase})        
 
-
-  return comp_list, correlation_stats_tensor
+  return df_stim_vs_gray, correlation_stats_tensor
 
    
 
