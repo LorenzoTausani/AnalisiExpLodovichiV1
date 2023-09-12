@@ -173,7 +173,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
             for matrix_idx in range(correlation_dict[session_name].shape[0]):
                correlation_tensor = correlation_dict[session_name][matrix_idx,:,:] #prendo ciascuna delle matrici di correlazione
-               correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(6, k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
+               correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(correlation_tensor.shape[0], k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
                correlation_stats[matrix_idx,0] = np.mean(correlation_vec_no_symmetry)
                correlation_stats[matrix_idx,1] = np.std(correlation_vec_no_symmetry)
             if correlation_stats_tensor is None:
@@ -705,8 +705,8 @@ def comparison_between_sessions_plots(df):
   nr_of_sessions = df.shape[0]
   tabella_comparazioni = np.empty((nr_of_sessions, 4))
   tabella_comparazioni[:] = np.nan
-  #sveglio_yn = int(input('vuoi analizzare animali svegli o anestetizzati? (1=sveglio, 0=anestetizzato)'))
-  #psilo_type = int(input('pre vs psilo alta o bassa? (1=alta, 0=bassa)'))
+  sveglio_yn = int(input('vuoi analizzare animali svegli o anestetizzati? (1=sveglio, 0=anestetizzato)'))
+  psilo_type = int(input('pre vs psilo alta o bassa? (1=alta, 0=bassa)'))
   stat_of_interest = df['% change wrt grey2'].to_numpy()
 
   row_idx = 0
@@ -725,7 +725,13 @@ def comparison_between_sessions_plots(df):
     session_info = session.split('_')
     sbj_name = session_info[1]
     session_type = session_info[2]
-    if session_info[-1]=='sveglio':
+    if session_info[-1]=='sveglio' and sveglio_yn==0:
+      continue
+    elif not(session_info[-1]=='sveglio') and sveglio_yn==1:
+      continue
+    if ('alta' in session_info[2]) and psilo_type==0:
+      continue
+    elif not('alta' in session_info[2]) and psilo_type==1:
       continue
     col_idx = int(session_type[-1])
     if col_idx>2:
@@ -738,4 +744,15 @@ def comparison_between_sessions_plots(df):
 
   # Remove rows following the last row containing numbers
   tabella_comparazioni = tabella_comparazioni[:last_row_index +1]
-  return tabella_comparazioni
+  animal_ids = set([element.split('_')[0] for element in Exp_day_list])
+  colors = [colorsys.hsv_to_rgb(i/len(animal_ids), 1, 1) for i in range(len(animal_ids))]
+  color_dict = {id: colors[i] for i, id in enumerate(animal_ids)}
+  for i,row in enumerate(tabella_comparazioni):
+      animal = Exp_day_list[i].split('_')[0]
+      plt.plot(row, color=color_dict[animal], marker = 'o', markersize=15)
+  labels = ['pre1', 'pre2', 'psilo1', 'psilo2']
+  plt.xticks(range(len(labels)), labels)
+  plt.ylabel('')
+  plt.show()
+
+  return tabella_comparazioni,Exp_day_list
