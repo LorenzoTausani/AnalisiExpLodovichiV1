@@ -698,3 +698,44 @@ def compute_correlation(Fluorescence, logical_dict):
       timeseries_of_interest = costruisci_timeseries_spezzata(Fluorescence,intervalli)
     correlation_tensor[idx+1,:,:] = np.corrcoef(timeseries_of_interest)
   return correlation_tensor
+
+
+def comparison_between_sessions_plots(df):
+  df = df.sort_values('Session name')
+  nr_of_sessions = df.shape[0]
+  tabella_comparazioni = np.empty((nr_of_sessions, 4))
+  tabella_comparazioni[:] = np.nan
+  #sveglio_yn = int(input('vuoi analizzare animali svegli o anestetizzati? (1=sveglio, 0=anestetizzato)'))
+  #psilo_type = int(input('pre vs psilo alta o bassa? (1=alta, 0=bassa)'))
+  stat_of_interest = df['% change wrt grey2'].to_numpy()
+
+  row_idx = 0
+  Exp_day_list=[]
+  for i,session in enumerate(df['Session name']):
+    session_info = session.split('_')
+    if i == 0:
+      day = session_info[0]
+      Exp_day_name = session_info[1]+'_'+day
+      Exp_day_list.append(Exp_day_name)
+    elif not(session_info[0] == day) or not(session_info[1] == df['Session name'].tolist()[i-1].split('_')[1]):
+      day = session_info[0]
+      Exp_day_name = session_info[1]+'_'+day
+      Exp_day_list.append(Exp_day_name)
+      row_idx = row_idx+1
+    session_info = session.split('_')
+    sbj_name = session_info[1]
+    session_type = session_info[2]
+    if session_info[-1]=='sveglio':
+      continue
+    col_idx = int(session_type[-1])
+    if col_idx>2:
+      col_idx = 2
+    col_idx =col_idx -1 #indici python
+    if 'psilo' in session_type:
+      col_idx = col_idx + 2
+    tabella_comparazioni[row_idx, col_idx] = stat_of_interest[i]
+  last_row_index = np.max(np.where(np.nansum(tabella_comparazioni,axis=1) > 0))
+
+  # Remove rows following the last row containing numbers
+  tabella_comparazioni = tabella_comparazioni[:last_row_index +1]
+  return tabella_comparazioni
