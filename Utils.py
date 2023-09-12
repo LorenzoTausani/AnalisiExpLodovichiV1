@@ -186,7 +186,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
   Percent_increase = [item[1][1] for item in comp_list]
   df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase})        
 
-  return df_stim_vs_gray, correlation_stats_tensor
+  return df_stim_vs_gray, correlation_dict
 
    
 
