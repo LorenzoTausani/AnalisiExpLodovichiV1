@@ -44,7 +44,7 @@ def SEMf(Fluorescence_matrix):
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
 
-def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False):
+def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True):
   getoutput=False
   if Session_folder=='manual_selection':
     getoutput=True
@@ -95,7 +95,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   #normalizzare?
 
   os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
-  logical_dict = Create_logical_dict(session_name,StimVec,df)
+  logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
   # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
   # DF_F = (F_neuSubtract - F0)/ F0
   # DF_F_zscored = zscore(DF_F, axis=1)  
@@ -111,10 +111,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
       dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
       F_to_use = dF_F_Yuste
 
-  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F')
-  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F')
-  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name)
-  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=False)
+  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F', change_existing_dict_files=change_existing_dict_files)
+  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', change_existing_dict_files=change_existing_dict_files)
+  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
+  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
   
  
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
@@ -127,7 +127,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   #if getoutput:
   return locals()
 
-def Analyze_all(Force_reanalysis = True, select_subjects = True):
+def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True):
   from google.colab import drive
   drive.mount('/content/drive')
   correlation_dict = {}
@@ -163,7 +163,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True):
               if os.path.isdir(os.path.join(Session_folder, 'Plots')):
                 shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
-            return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name)
+            return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name, change_existing_dict_files=change_existing_dict_files)
             comp_item = np.zeros(2)
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
