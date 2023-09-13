@@ -252,7 +252,7 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   return df, StimVec
 
 
-def Create_logical_dict(session_name,stimoli,df):
+def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
     def contains_plus_character(vector): #function to check if any element of df['Orientamenti'].unique() contains a '+' sign
       for string in vector:
           if '+' in string:
@@ -260,7 +260,7 @@ def Create_logical_dict(session_name,stimoli,df):
       return False
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
     logical_dict_filename = session_name+'_logical_dict.npz'
-    if not(os.path.isfile(logical_dict_filename)):
+    if not(os.path.isfile(logical_dict_filename)) or change_existing_dict_files==True:
         logical_dict ={} #contiene gli indici dei vari stimoli
         for stim in df['Orientamenti'].unique():
             if stim != 'END':
@@ -326,11 +326,11 @@ def Create_logical_dict(session_name,stimoli,df):
 
     return logical_dict
 
-def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_type = 'F'):
+def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_type = 'F', change_existing_dict_files=True):
     #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
     Mean_SEM_dict_filename = session_name+Fluorescence_type+'_Mean_SEM_dict.npz'
-    if not(os.path.isfile(Mean_SEM_dict_filename)):
+    if not(os.path.isfile(Mean_SEM_dict_filename)) or change_existing_dict_files==True:
         Mean_SEM_dict = {}
         for key in logical_dict.keys():
             if key in SBAs:
@@ -361,7 +361,7 @@ def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_
     return Mean_SEM_dict
 
 
-def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F'):
+def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F',change_existing_dict_files = True):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
 
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
@@ -369,7 +369,7 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
   if not(isinstance(averaging_window, str)):
       averaging_window = str(averaging_window)
   Cell_max_dict_filename = session_name+'_'+Fluorescence_type+'_Cell_max_dict_'+averaging_window+'.npz'
-  if not(os.path.isfile(Cell_max_dict_filename)):
+  if not(os.path.isfile(Cell_max_dict_filename)) or change_existing_dict_files==True:
     Cell_Max_dict = {}
     Cell_Max_dict['Fluorescence_type']=Fluorescence_type
     Cell_Max_dict['averaging_window']=averaging_window
@@ -479,9 +479,9 @@ def OSIf_alternative(Tuning_curve_avgSem, numeric_keys_int):  #preferisci questa
   return OSI_arr,preferred_or_list
 
 
-def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=False):
+def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=False,change_existing_dict_files=True):
   OSI_dict_filename = session_name+'_'+str(Cell_Max_dict['Fluorescence_type'])+'_OSI_dict_'+str(Cell_Max_dict['averaging_window'])+'.npz'
-  if not(os.path.isfile(OSI_dict_filename)):
+  if not(os.path.isfile(OSI_dict_filename)) or change_existing_dict_files==True:
     nr_cells = Cell_Max_dict['0'].shape[0]
     if OSI_alternative:
       OSI_v = np.full((nr_cells,3), np.nan)
@@ -538,7 +538,7 @@ def trace_good(Fluorescence): #rimetti a posto come una volta
          metrica=0
     return metrica
 
-def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True):
+def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F', OSI_alternative=True, change_existing_dict_files=True):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
 
@@ -556,7 +556,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
     OSI_v = np.full((nr_cells), np.nan)
     PrefOr_v = np.full((nr_cells), np.nan)
   Cell_stat_dict_filename = session_name+'_'+Fluorescence_type+'_Cell_stat_dict_'+averaging_window+OSI_writing+'.npz'
-  if not(os.path.isfile(Cell_stat_dict_filename)):
+  if not(os.path.isfile(Cell_stat_dict_filename)) or change_existing_dict_files==True:
     Cell_stat_dict = {}
     Cell_stat_dict['Fluorescence_type']=Fluorescence_type
     Cell_stat_dict['averaging_window']=averaging_window
