@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
 import ast
+import colorsys
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = []
