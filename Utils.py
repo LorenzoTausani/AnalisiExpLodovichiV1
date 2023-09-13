@@ -12,6 +12,7 @@ import Plotting_functions
 from Plotting_functions import *
 import ast
 import colorsys
+from collections import Counter
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = []
@@ -118,7 +119,19 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   
  
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
-  p_value,perc_diff_wGray2 = Comparison_gray_stim(F_to_use, logical_dict,session_name)
+  p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
+  indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+  fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
+  indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
+  fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
+  indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
+  fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
+  avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
+  avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
+  # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
+  # for value, count in value_counts.items():
+  #   print(f"{value}: {count} times")
+
   Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F')
   # if getoutput==True: #da rimouovere
   #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
@@ -167,7 +180,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             comp_item = np.zeros(2)
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
-            comp_list.append([session_name,comp_item])
+            comp_list.append([session_name,comp_item,return_dict['fraction_responding'],return_dict['fraction_tuned'],return_dict['fraction_responding_tuned'],return_dict['avg_tuning_all_responding'],return_dict['avg_tuning_all_tuned_responding']])
 
             #vado a raccogliere le statistiche di correlazione che mi interessano
             correlation_dict[session_name] =compute_correlation(return_dict['F_neuSubtract'], return_dict['logical_dict'])
@@ -185,8 +198,17 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   sesson_names = [item[0] for item in comp_list]
   p_values = [item[1][0] for item in comp_list]
   Percent_increase = [item[1][1] for item in comp_list]
-  df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase})        
-
+  perc_responding_V = [item[2]*100 for item in comp_list]
+  perc_tuned_V = [item[3]*100 for item in comp_list]
+  perc_responding_tuned_V = [item[4]*100 for item in comp_list]
+  avg_tuning_all_responding_V = [item[5] for item in comp_list]
+  avg_tuning_all_tuned_responding_V = [item[6] for item in comp_list]
+  df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase, '% responding (>6%)': perc_responding_V,
+                                  '% tuned (OSI>0.5)':perc_tuned_V, '% responding and tuned':perc_responding_tuned_V, 'Mean tuning of responsive': avg_tuning_all_responding_V, 'Mean tuning responsive and tuned': avg_tuning_all_tuned_responding_V})        
+  V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
+  for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
+      df_stim_vs_gray[col[1]] = col[0]
+      
   return df_stim_vs_gray, correlation_stats_tensor, correlation_dict
 
    
@@ -505,7 +527,7 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=False,change_exi
         OSI_v[cell_id,:] = OSI_arr
         PrefOr_v.append(preferred_or_list)
       else:
-        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = False)
+        OSI, preferred_or = OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = idxs_4orth_ori,plus180or = True)
         OSI_v[cell_id] = OSI
         PrefOr_v[cell_id] = preferred_or
     cell_OSI_dict['OSI'] = OSI_v
@@ -551,7 +573,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
     PrefOr_v = []
   else:
     #Pl180yn = int(input('do you want to consider also the parallel orientation? (1=y,0=n)'))
-    Pl180yn = 0
+    Pl180yn = True
     OSI_writing = 'OSI_classic' + ('+180' if Pl180yn == 1 else '')
     OSI_v = np.full((nr_cells), np.nan)
     PrefOr_v = np.full((nr_cells), np.nan)
@@ -653,6 +675,7 @@ def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
   # Add labels and title
   plt.xlabel("Conditions")
   plt.ylabel("Fluorescence")
+  perc_diff_wGray2_vector = ((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100
   perc_diff_wGray = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,3])/Activity_arr2[:,3])*100)
   perc_diff_wGray2 = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100)
   _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,3], alternative='greater')
@@ -661,7 +684,7 @@ def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
   plt.show()
 
   #return Activity_arr,Activity_arr2
-  return p_value,perc_diff_wGray2
+  return p_value,perc_diff_wGray2, perc_diff_wGray2_vector
 
 def compute_correlation(Fluorescence, logical_dict):
   def costruisci_timeseries_spezzata(Fluorescence,intervalli_logical_dict):
