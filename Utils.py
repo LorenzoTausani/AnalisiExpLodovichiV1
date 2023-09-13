@@ -120,14 +120,25 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
  
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
   p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
-  indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
-  fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
+  
   indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
-  fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
-  indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
-  fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
-  avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
-  avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
+  if len(perc_diff_wGray2_vector)>0:
+    indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+    fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
+    fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
+    indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
+    fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
+    avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
+    avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
+  else:
+     fraction_responding =np.nan
+     fraction_tuned =  np.nan
+     fraction_responding_tuned = np.nan
+     avg_tuning_all_responding = np.nan
+     avg_tuning_all_tuned_responding = np.nan
+  
+  
+  
   # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
   # for value, count in value_counts.items():
   #   print(f"{value}: {count} times")
