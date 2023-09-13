@@ -208,7 +208,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
-      
+
   return df_stim_vs_gray, correlation_stats_tensor, correlation_dict
 
    
@@ -427,10 +427,10 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
                     # Cells_maxs[cell,i] = (Max-Min)/Min
                     #Cells_maxs[cell,i] = trace_good(cell_trace[row[0]:(row[0]+averaging_window)])
                     Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
-                    #Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+                    Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
                     Avg_stim_V[cell,i] = Avg_stim
                     Avg_PreStim_V[cell,i] = Avg_PreStim
-                    Cells_maxs[cell,i] = Avg_stim
+                    #Cells_maxs[cell,i] = Avg_stim
 
         Cell_Max_dict[key] = Cells_maxs
         Cell_Max_dict[key+'_PreStim'] = Avg_PreStim_V
@@ -447,7 +447,8 @@ def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,
   preferred_or = numeric_keys_int[idx_max]
   #Next is if you want to consider R_pref and R_ortho also considering the +180 orientations
   if plus180or:
-    R_pref  = np.mean([Tuning_curve_avgSem[0,idx_max],Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+4]]])
+    #R_pref  = np.mean([Tuning_curve_avgSem[0,idx_max],Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+4]]])
+    R_pref  = Tuning_curve_avgSem[0,idx_max]
     R_ortho = np.mean([Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+2]],Tuning_curve_avgSem[0,idxs_4orth_ori[idx_max+6]]])
   else:
     R_pref  = Tuning_curve_avgSem[0,idx_max]
@@ -602,11 +603,11 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
                 giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
                 fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]                
                 if giusta_durata and fluo_registrata:#se lo stimolo ha la giusta durata
-                    #Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
-                    #Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
-                    #Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
-                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)])
-                    Cells_maxs[cell,i] = Avg_stim
+                    Avg_PreStim = np.mean(cell_trace[(row[0]-averaging_window):row[0]]) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+                    Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)]) #medio i valori di fluorescenza nei averaging_window frame dello stimolo (gray)
+                    Cells_maxs[cell,i] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+                    #Avg_stim = np.mean(cell_trace[row[0]:(row[0]+averaging_window)])
+                    #Cells_maxs[cell,i] = Avg_stim
         Cell_stat_dict[key] = Cells_maxs
 
 
