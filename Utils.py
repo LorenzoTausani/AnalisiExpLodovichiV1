@@ -122,8 +122,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
   
   indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
-  if len(perc_diff_wGray2_vector)>0:
-    indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+  indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+
+  if len(indices_responding)>0:
     fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
     fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
     indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
