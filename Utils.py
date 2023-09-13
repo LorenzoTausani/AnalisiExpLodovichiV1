@@ -708,8 +708,9 @@ def comparison_between_sessions_plots(df):
   tabella_comparazioni[:] = np.nan
   sveglio_yn = int(input('vuoi analizzare animali svegli o anestetizzati? (1=sveglio, 0=anestetizzato)'))
   psilo_type = int(input('pre vs psilo alta o bassa? (1=alta, 0=bassa)'))
-  stat_of_interest = df['% change wrt grey2'].to_numpy()
-
+  Metrics_list = '\n'.join([f'{i}: {metr}' for i, metr in enumerate(df.columns)])
+  idx_Metrics = int(input('Which variable?\n'+Metrics_list))
+  stat_of_interest = df[df.columns[idx_Metrics]].to_numpy()
   row_idx = 0
   Exp_day_list=[]
   for i,session in enumerate(df['Session name']):
@@ -752,6 +753,9 @@ def comparison_between_sessions_plots(df):
       animal = Exp_day_list[i].split('_')[0]
       plt.plot(row, color=color_dict[animal], marker = 'o', markersize=15)
   labels = ['pre1', 'pre2', 'psilo1', 'psilo2']
+  proxy_artists = [plt.Line2D([0], [0], marker='o', color='w', label=f'{animal_id}', markersize=15, markerfacecolor=color)
+                for animal_id, color in color_dict.items()]
+  plt.legend(handles=proxy_artists, loc='lower center', bbox_to_anchor=(0.5, -0.3), ncol=len(color_dict), frameon=False)
   plt.xticks(range(len(labels)), labels)
   plt.ylabel('')
   plt.show()
