@@ -241,7 +241,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
 
-  return df_stim_vs_gray, correlation_stats_tensor, correlation_dict
+  return df_stim_vs_gray, correlation_stats_tensor, correlation_dict, responding_cells_df_ALL
 
    
 
