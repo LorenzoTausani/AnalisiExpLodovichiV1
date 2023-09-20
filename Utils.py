@@ -125,12 +125,18 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
   if len(indices_responding)>0:
     fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
-    _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = False)
+    _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = True)
     fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
     indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
     fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
     avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
     avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
+
+    session_name_column = [session_name] * len(indices_responding)
+    session_name_column = [s_name+'cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
+    perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
+    tuning_col = cell_OSI_dict['OSI'][indices_responding]
+    responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
   else:
      perc_diff_wGray2_responding_only = np.nan
      fraction_responding =np.nan
@@ -138,16 +144,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
      fraction_responding_tuned = np.nan
      avg_tuning_all_responding = np.nan
      avg_tuning_all_tuned_responding = np.nan
-  
-  session_name_column = [session_name] * len(indices_responding)
-  session_name_column = [s_name+'cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
-  perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
-  tuning_col = cell_OSI_dict['OSI'][indices_responding]
-  responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
+     responding_cells_df = []
 
-  
-
-  
   
   # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
   # for value, count in value_counts.items():
@@ -164,6 +162,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True):
   from google.colab import drive
   drive.mount('/content/drive')
+  V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
   correlation_dict = {}
   correlation_stats_tensor = None
   Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
@@ -198,6 +197,8 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
                 shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
             return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name, change_existing_dict_files=change_existing_dict_files)
+            indices_responding = return_dict['indices_responding']
+            responding_cells_df = return_dict['responding_cells_df']
             comp_item = np.zeros(2)
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
@@ -207,6 +208,8 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
             for matrix_idx in range(correlation_dict[session_name].shape[0]):
                correlation_tensor = correlation_dict[session_name][matrix_idx,:,:] #prendo ciascuna delle matrici di correlazione
+               if isinstance(responding_cells_df, pd.DataFrame):
+                responding_cells_df[V_names_corrs[matrix_idx]] = np.mean(correlation_tensor[indices_responding,:], axis=0) #columnwise average of correlation per each responding cell
                correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(correlation_tensor.shape[0], k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
                correlation_stats[matrix_idx,0] = np.mean(correlation_vec_no_symmetry)
                correlation_stats[matrix_idx,1] = np.std(correlation_vec_no_symmetry)
@@ -215,6 +218,15 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             else:
                 correlation_stats = np.expand_dims(correlation_stats, axis=0)
                 correlation_stats_tensor = np.concatenate((correlation_stats_tensor, correlation_stats), axis=0)
+            
+            if isinstance(responding_cells_df, pd.DataFrame):
+               if 'responding_cells_df_ALL' in locals():
+                responding_cells_df_ALL = pd.concat([responding_cells_df_ALL, responding_cells_df], axis=0)
+               else:
+                responding_cells_df_ALL = responding_cells_df
+
+               
+                
   sesson_names = [item[0] for item in comp_list]
   p_values = [item[1][0] for item in comp_list]
   Percent_increase = [item[1][1] for item in comp_list]
@@ -225,7 +237,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   avg_tuning_all_tuned_responding_V = [item[6] for item in comp_list]
   df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase, '% responding (>6%)': perc_responding_V,
                                   '% tuned (OSI>0.5)':perc_tuned_V, '% responding and tuned':perc_responding_tuned_V, 'Mean tuning of responsive': avg_tuning_all_responding_V, 'Mean tuning responsive and tuned': avg_tuning_all_tuned_responding_V})        
-  V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
+  
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
 
