@@ -120,24 +120,33 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
  
   os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
   p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
-  
   indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
   indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
 
   if len(indices_responding)>0:
     fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
+    _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = False)
     fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
     indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
     fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
     avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
     avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
   else:
+     perc_diff_wGray2_responding_only = np.nan
      fraction_responding =np.nan
      fraction_tuned =  np.nan
      fraction_responding_tuned = np.nan
      avg_tuning_all_responding = np.nan
      avg_tuning_all_tuned_responding = np.nan
   
+  session_name_column = [session_name] * len(indices_responding)
+  session_name_column = [s_name+'cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
+  perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
+  tuning_col = cell_OSI_dict['OSI'][indices_responding]
+  responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
+
+  
+
   
   
   # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
@@ -193,7 +202,6 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
             comp_list.append([session_name,comp_item,return_dict['fraction_responding'],return_dict['fraction_tuned'],return_dict['fraction_responding_tuned'],return_dict['avg_tuning_all_responding'],return_dict['avg_tuning_all_tuned_responding']])
-
             #vado a raccogliere le statistiche di correlazione che mi interessano
             correlation_dict[session_name] =compute_correlation(return_dict['F_neuSubtract'], return_dict['logical_dict'])
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
@@ -652,7 +660,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
   return Cell_stat_dict
 
 
-def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
+def Comparison_gray_stim(Fluorescence, logical_dict,session_name, omitplot = False):
   
 
   str_keys, list_keys = get_orientation_keys(logical_dict)
@@ -692,9 +700,10 @@ def Comparison_gray_stim(Fluorescence, logical_dict,session_name):
   perc_diff_wGray = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,3])/Activity_arr2[:,3])*100)
   perc_diff_wGray2 = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100)
   _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,3], alternative='greater')
-  plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
-  plt.savefig(session_name+'Fluorescence_periods_comparison.png')
-  plt.show()
+  if omitplot==False:
+    plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
+    plt.savefig(session_name+'Fluorescence_periods_comparison.png')
+    plt.show()
 
   #return Activity_arr,Activity_arr2
   return p_value,perc_diff_wGray2, perc_diff_wGray2_vector
