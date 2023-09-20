@@ -133,7 +133,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
 
     session_name_column = [session_name] * len(indices_responding)
-    session_name_column = [s_name+'cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
+    session_name_column = [s_name+'_cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
@@ -162,6 +162,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True):
   from google.colab import drive
   drive.mount('/content/drive')
+  type_corr = input('which fluorescence do you want to use for correlations? (options: F, Fneu, F_neuSubtract)')
   V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
   correlation_dict = {}
   correlation_stats_tensor = None
@@ -204,12 +205,12 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             comp_item[1] = return_dict['perc_diff_wGray2']
             comp_list.append([session_name,comp_item,return_dict['fraction_responding'],return_dict['fraction_tuned'],return_dict['fraction_responding_tuned'],return_dict['avg_tuning_all_responding'],return_dict['avg_tuning_all_tuned_responding']])
             #vado a raccogliere le statistiche di correlazione che mi interessano
-            correlation_dict[session_name] =compute_correlation(return_dict['F_neuSubtract'], return_dict['logical_dict'])
+            correlation_dict[session_name] =compute_correlation(return_dict[type_corr], return_dict['logical_dict'])
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
             for matrix_idx in range(correlation_dict[session_name].shape[0]):
                correlation_tensor = correlation_dict[session_name][matrix_idx,:,:] #prendo ciascuna delle matrici di correlazione
-              #  if isinstance(responding_cells_df, pd.DataFrame):
-              #   responding_cells_df[V_names_corrs[matrix_idx]] = np.mean(correlation_tensor[indices_responding,:], axis=0) #columnwise average of correlation per each responding cell
+               if isinstance(responding_cells_df, pd.DataFrame):
+                responding_cells_df[V_names_corrs[matrix_idx]] = np.mean(correlation_tensor[indices_responding,:], axis=1) #columnwise average of correlation per each responding cell
                correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(correlation_tensor.shape[0], k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
                correlation_stats[matrix_idx,0] = np.mean(correlation_vec_no_symmetry)
                correlation_stats[matrix_idx,1] = np.std(correlation_vec_no_symmetry)
