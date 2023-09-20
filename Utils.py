@@ -133,7 +133,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
 
     session_name_column = [session_name] * len(indices_responding)
-    session_name_column = [s_name+'_cell_'+str(nr) for nr,s_name in enumerate(session_name_column)]
+    session_name_column = [s_name+'_cell'+str(nr) for nr,s_name in enumerate(session_name_column)]
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
