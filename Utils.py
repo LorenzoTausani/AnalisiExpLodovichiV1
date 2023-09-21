@@ -122,6 +122,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
   indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
   indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+  nr_segmented_cells = len(perc_diff_wGray2_vector)
 
   if len(indices_responding)>0:
     fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
@@ -203,7 +204,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             comp_item = np.zeros(2)
             comp_item[0] = return_dict['p_value']
             comp_item[1] = return_dict['perc_diff_wGray2']
-            comp_list.append([session_name,comp_item,return_dict['fraction_responding'],return_dict['fraction_tuned'],return_dict['fraction_responding_tuned'],return_dict['avg_tuning_all_responding'],return_dict['avg_tuning_all_tuned_responding']])
+            comp_list.append([session_name,comp_item,return_dict['fraction_responding'],return_dict['fraction_tuned'],return_dict['fraction_responding_tuned'],return_dict['avg_tuning_all_responding'],return_dict['avg_tuning_all_tuned_responding'],return_dict['nr_segmented_cells']])
             #vado a raccogliere le statistiche di correlazione che mi interessano
             correlation_dict[session_name] =compute_correlation(return_dict[type_corr], return_dict['logical_dict'])
             correlation_stats = np.zeros((correlation_dict[session_name].shape[0],2))
@@ -238,8 +239,10 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   perc_responding_tuned_V = [item[4]*100 for item in comp_list]
   avg_tuning_all_responding_V = [item[5] for item in comp_list]
   avg_tuning_all_tuned_responding_V = [item[6] for item in comp_list]
+  nr_segmented_cells = [item[7] for item in comp_list]
   df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase, '% responding (>6%)': perc_responding_V,
-                                  '% tuned (OSI>0.5)':perc_tuned_V, '% responding and tuned':perc_responding_tuned_V, 'Mean tuning of responsive': avg_tuning_all_responding_V, 'Mean tuning responsive and tuned': avg_tuning_all_tuned_responding_V})        
+                                  '% tuned (OSI>0.5)':perc_tuned_V, '% responding and tuned':perc_responding_tuned_V, 'Mean tuning of responsive': avg_tuning_all_responding_V, 'Mean tuning responsive and tuned': avg_tuning_all_tuned_responding_V, 
+                                  'Nr_segmented_cells': nr_segmented_cells})        
   
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
