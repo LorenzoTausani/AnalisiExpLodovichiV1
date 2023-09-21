@@ -210,7 +210,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             for matrix_idx in range(correlation_dict[session_name].shape[0]):
                correlation_tensor = correlation_dict[session_name][matrix_idx,:,:] #prendo ciascuna delle matrici di correlazione
                if isinstance(responding_cells_df, pd.DataFrame):
-                responding_cells_df[V_names_corrs[matrix_idx]] = np.mean(correlation_tensor[indices_responding,indices_responding], axis=1) #columnwise average of correlation per each responding cell
+                responding_cells_df[V_names_corrs[matrix_idx]] = np.mean(correlation_tensor[indices_responding,indices_responding], axis=0) #columnwise average of correlation per each responding cell
                correlation_vec_no_symmetry = correlation_tensor[np.triu_indices(correlation_tensor.shape[0], k=1)] #numpy.triu_indices(n, k=0, m=None) Return the indices for the upper-triangle of an (n, m) array.
                correlation_stats[matrix_idx,0] = np.mean(correlation_vec_no_symmetry)
                correlation_stats[matrix_idx,1] = np.std(correlation_vec_no_symmetry)
