@@ -796,7 +796,7 @@ def comparison_between_sessions_plots(df):
       continue
     if ('alta' in session_info[2]) and psilo_type==0:
       continue
-    elif not('alta' in session_info[2]) and psilo_type==1:
+    elif (not('alta' in session_info[2]) and not('pre' in session_info[2])) and psilo_type==1: #ora dovrebbe andare bene
       continue
     col_idx = int(session_type[-1])
     if col_idx>2:
