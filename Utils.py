@@ -47,6 +47,7 @@ def SEMf(Fluorescence_matrix):
    return SEM
 
 def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
+  nr_PCA_components=10
   getoutput=False
   if Session_folder=='manual_selection':
     getoutput=True
@@ -139,13 +140,13 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
-    if PCA_yn == 1:
+    if PCA_yn == 1 and len(indices_responding)>nr_PCA_components:
       D = F_to_use[indices_responding,:]
       mean = np.mean(D, axis=0)
       std_dev = np.std(D, axis=0)
       data_standardized = (D - mean) / std_dev
       # Step 2: Perform PCA
-      pca = PCA(n_components=10) # You can change the number of components as needed
+      pca = PCA(n_components=nr_PCA_components) # You can change the number of components as needed
       pca.fit(data_standardized)
       eigenspectra = pca.explained_variance_ratio_
 
@@ -241,6 +242,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
                 responding_cells_df_ALL = pd.concat([responding_cells_df_ALL, responding_cells_df], axis=0)
                else:
                 responding_cells_df_ALL = responding_cells_df
+
             if 'eigenspectra' in return_dict:
               eigenspectra = return_dict['eigenspectra']
               new_row = {
