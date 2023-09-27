@@ -125,22 +125,23 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
   indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
   nr_segmented_cells = len(perc_diff_wGray2_vector)
+  nr_responsive_cells = len(indices_responding)
 
-  if len(indices_responding)>0:
-    fraction_responding = len(indices_responding)/len(perc_diff_wGray2_vector)
+  if nr_responsive_cells>0:
+    fraction_responding = nr_responsive_cells/len(perc_diff_wGray2_vector)
     _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = True)
     fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
     indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
-    fraction_responding_tuned =  len(indices_responding_and_tuned)/len(indices_responding)
+    fraction_responding_tuned =  len(indices_responding_and_tuned)/nr_responsive_cells
     avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
     avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
 
-    session_name_column = [session_name] * len(indices_responding)
+    session_name_column = [session_name] * nr_responsive_cells
     session_name_column = [s_name+'_cell'+str(nr) for nr,s_name in enumerate(session_name_column)]
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
-    if PCA_yn == 1 and len(indices_responding)>nr_PCA_components:
+    if PCA_yn == 1 and nr_responsive_cells>nr_PCA_components:
       D = F_to_use[indices_responding,:]
       mean = np.mean(D, axis=0)
       std_dev = np.std(D, axis=0)
@@ -172,16 +173,18 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   #if getoutput:
   return locals()
 
-def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True):
+def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True, lower_bound_timebins_concat = 45000):
   from google.colab import drive
   drive.mount('/content/drive')
   type_corr = input('which fluorescence do you want to use for correlations? (options: F, Fneu, F_neuSubtract)')
   V_names_corrs = ['Corr all trace','Corr spontanea1','Corr spontanea2','Corr stim', 'Corr gray']
   correlation_dict = {}
+  Concat_responsive_cells = None
   correlation_stats_tensor = None
   Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
   columns = ['Session', 'PCA1', 'PCA2', 'PCA3','PCA4','PCA5','PCA6','PCA7','PCA8','PCA9','PCA10']  # Replace with your column names
   PCA_explVar_df = pd.DataFrame(columns=columns)
+  nr_responsive_cells_dict = {}
   os.chdir(Main_folder)
   dir_list = os.listdir(Main_folder)
   if select_subjects:
@@ -214,6 +217,18 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
 
             return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name, change_existing_dict_files=change_existing_dict_files)
             indices_responding = return_dict['indices_responding']
+
+            if Concat_responsive_cells is None:
+               Concat_responsive_cells = return_dict['D']
+               column_len = Concat_responsive_cells.shape[1]
+            else:
+              cells_to_concat = return_dict['D']
+              nr_timebins = cells_to_concat.shape[1]
+              if not(nr_timebins==column_len) and (nr_timebins >= lower_bound_timebins_concat):
+                 column_len = min(nr_timebins, column_len)
+              Concat_responsive_cells = np.concatenate((Concat_responsive_cells[:,:column_len], cells_to_concat[:,:column_len]), axis=1)
+              nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
+
             responding_cells_df = return_dict['responding_cells_df']
             comp_item = np.zeros(2)
             comp_item[0] = return_dict['p_value']

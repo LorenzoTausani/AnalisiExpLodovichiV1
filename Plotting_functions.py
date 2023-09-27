@@ -421,3 +421,29 @@ def plotta_stim_separatamente(Fluoresence,logical_dict):
     ax[i].axvline(x=300, color='black', linestyle='--')
 
   plt.subplots_adjust(hspace=0.5)
+
+
+def PCA_eigenspectra_plot(PCA_explVar_df):
+  PCA_explVar_df_noAWAKE = PCA_explVar_df[~PCA_explVar_df['Session'].str.contains('sveglio')]
+  psilo_rows = PCA_explVar_df_noAWAKE[PCA_explVar_df_noAWAKE['Session'].str.contains('psilo')]
+  pre_rows = PCA_explVar_df_noAWAKE[~PCA_explVar_df_noAWAKE['Session'].str.contains('pre')]
+  psiloB_rows = PCA_explVar_df_noAWAKE[~PCA_explVar_df_noAWAKE['Session'].str.contains('alta')]
+  psiloA_rows = PCA_explVar_df_noAWAKE[PCA_explVar_df_noAWAKE['Session'].str.contains('alta')]
+  list_PCA_df = [pre_rows, psiloB_rows, psiloA_rows]
+  color_list = ['black', 'blue', 'red']
+  legend_list = ['Pre', 'PsiloB', 'PsiloA']
+
+  fig, ax = plt.subplots()
+
+  for idx, PCA_condition in enumerate(list_PCA_df):
+    average_eigenspectra = PCA_condition.iloc[:, 1:].mean().cumsum()
+    sem_eigenspectra = PCA_condition.iloc[:, 1:].sem()
+    ax.plot(average_eigenspectra, color=color_list[idx], linewidth=3, label=legend_list[idx])
+    ax.fill_between(average_eigenspectra.index, average_eigenspectra - sem_eigenspectra, average_eigenspectra + sem_eigenspectra, color=color_list[idx], alpha=0.5)
+
+  ax.set_xlabel('PCA Components')
+  ax.set_ylabel('% of variance explained')
+  ax.set_title('Average eigenspectra')
+  ax.legend()
+
+  plt.show()
