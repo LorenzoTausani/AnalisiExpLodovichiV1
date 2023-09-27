@@ -179,6 +179,8 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   correlation_dict = {}
   correlation_stats_tensor = None
   Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
+  columns = ['Session', 'PCA1', 'PCA2', 'PCA3','PCA4','PCA5','PCA6','PCA7','PCA8','PCA9','PCA10']  # Replace with your column names
+  PCA_explVar_df = pd.DataFrame(columns=columns)
   os.chdir(Main_folder)
   dir_list = os.listdir(Main_folder)
   if select_subjects:
@@ -239,6 +241,22 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
                 responding_cells_df_ALL = pd.concat([responding_cells_df_ALL, responding_cells_df], axis=0)
                else:
                 responding_cells_df_ALL = responding_cells_df
+            if 'eigenspectra' in return_dict:
+              eigenspectra = return_dict['eigenspectra']
+              new_row = {
+                  'Session': session_name,
+                  'PCA1':eigenspectra[0],
+                  'PCA2':eigenspectra[1], 
+                  'PCA3':eigenspectra[2], 
+                  'PCA4':eigenspectra[3], 
+                  'PCA5':eigenspectra[4], 
+                  'PCA6':eigenspectra[5], 
+                  'PCA7':eigenspectra[6], 
+                  'PCA8':eigenspectra[7], 
+                  'PCA9':eigenspectra[8], 
+                  'PCA10':eigenspectra[9], 
+              }
+              PCA_explVar_df = PCA_explVar_df.append(new_row, ignore_index=True)
 
                
                 
@@ -258,7 +276,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
 
-  return df_stim_vs_gray, correlation_stats_tensor, correlation_dict, responding_cells_df_ALL
+  return locals()
 
    
 
