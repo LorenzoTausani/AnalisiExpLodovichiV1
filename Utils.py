@@ -217,18 +217,19 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
 
             return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name, change_existing_dict_files=change_existing_dict_files)
             indices_responding = return_dict['indices_responding']
-
-            if Concat_responsive_cells is None:
-               Concat_responsive_cells = return_dict['F_responding']
-               column_len = Concat_responsive_cells.shape[1]
-            elif ('F_responding' in return_dict):
-              print('session '+ session_name +' has F_responding')
-              cells_to_concat = return_dict['F_responding']
-              nr_timebins = cells_to_concat.shape[1]
-              if not(nr_timebins==column_len) and (nr_timebins >= lower_bound_timebins_concat):
-                 column_len = min(nr_timebins, column_len)
-              Concat_responsive_cells = np.concatenate((Concat_responsive_cells[:,:column_len], cells_to_concat[:,:column_len]), axis=1)
-              nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
+            if ('F_responding' in return_dict):
+              if Concat_responsive_cells is None:
+                Concat_responsive_cells = return_dict['F_responding']
+                column_len = Concat_responsive_cells.shape[1]
+              else:
+                cells_to_concat = return_dict['F_responding']
+                nr_timebins = cells_to_concat.shape[1]
+                if not(nr_timebins==column_len) and (nr_timebins >= lower_bound_timebins_concat):
+                  column_len = min(nr_timebins, column_len)
+                Concat_responsive_cells = np.concatenate((Concat_responsive_cells[:,:column_len], cells_to_concat[:,:column_len]), axis=1)
+                nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
+            else:
+               print("\033[1mNOTE:Session "+ session_name+" DOES NOT have F_responding"+"\033[0m")
 
             responding_cells_df = return_dict['responding_cells_df']
             comp_item = np.zeros(2)
