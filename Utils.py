@@ -827,18 +827,25 @@ def comparison_between_sessions_plots(df):
 
 
 def stat_comparison_betw_cells(responding_cells_df_ALL): 
+  psilo_ab = int(input('psilo alta o bassa? (1= alta, 0=bassa)'))
   pre_cells = responding_cells_df_ALL[responding_cells_df_ALL["responding cell name"].str.contains("pre")]
-  pre_cells = pre_cells[~pre_cells["responding cell name"].str.contains("sveglio|alta")]
+  pre_cells = pre_cells[~pre_cells["responding cell name"].str.contains("sveglio")]
 
   psilo_cells = responding_cells_df_ALL[responding_cells_df_ALL["responding cell name"].str.contains("psilo")]
-  psilo_cells = psilo_cells[~psilo_cells["responding cell name"].str.contains("sveglio|alta")]
+  psilo_cells = psilo_cells[~psilo_cells["responding cell name"].str.contains("sveglio")]
+  if psilo_ab == 0:
+    l2 = 'Psilo_bassa'
+    psilo_cells = psilo_cells[~psilo_cells["responding cell name"].str.contains("alta")]
+  else:
+    l2 = 'Psilo_alta'
+    psilo_cells = psilo_cells[psilo_cells["responding cell name"].str.contains("alta")]
 
   _, p_value = stats.mannwhitneyu(pre_cells['Corr gray'], psilo_cells['Corr gray'])
   var_list = '\n'.join([f'{i}: {x}' for i, x in enumerate(responding_cells_df_ALL.columns)])
   idx_vars = ast.literal_eval(input('Which variables do you want to compare? (write in [])?\n'+var_list))
   for v in idx_vars:
     _, p_value = stats.mannwhitneyu(pre_cells[responding_cells_df_ALL.columns[v]], psilo_cells[responding_cells_df_ALL.columns[v]])
-    plt.boxplot([pre_cells[responding_cells_df_ALL.columns[v]], psilo_cells[responding_cells_df_ALL.columns[v]]], labels=['Pre', 'Psilo_bassa'])
+    plt.boxplot([pre_cells[responding_cells_df_ALL.columns[v]], psilo_cells[responding_cells_df_ALL.columns[v]]], labels=['Pre', l2])
     plt.ylabel(responding_cells_df_ALL.columns[v])
     plt.title('p value: '+str(p_value))
     plt.show()
