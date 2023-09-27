@@ -142,10 +142,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
     if PCA_yn == 1 and nr_responsive_cells>nr_PCA_components:
-      D = F_to_use[indices_responding,:]
-      mean = np.mean(D, axis=0)
-      std_dev = np.std(D, axis=0)
-      data_standardized = (D - mean) / std_dev
+      F_responding = F_to_use[indices_responding,:]
+      mean = np.mean(F_responding, axis=0)
+      std_dev = np.std(F_responding, axis=0)
+      data_standardized = (F_responding - mean) / std_dev
       # Step 2: Perform PCA
       pca = PCA(n_components=nr_PCA_components) # You can change the number of components as needed
       pca.fit(data_standardized)
@@ -221,8 +221,9 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             if Concat_responsive_cells is None:
                Concat_responsive_cells = return_dict['D']
                column_len = Concat_responsive_cells.shape[1]
-            else:
-              cells_to_concat = return_dict['D']
+            elif ('F_responding' in return_dict):
+              print('session '+ session_name +' has F_responding')
+              cells_to_concat = return_dict['F_responding']
               nr_timebins = cells_to_concat.shape[1]
               if not(nr_timebins==column_len) and (nr_timebins >= lower_bound_timebins_concat):
                  column_len = min(nr_timebins, column_len)
