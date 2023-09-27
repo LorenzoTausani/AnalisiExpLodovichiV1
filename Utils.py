@@ -226,8 +226,9 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
                 nr_timebins = cells_to_concat.shape[1]
                 if not(nr_timebins==column_len) and (nr_timebins >= lower_bound_timebins_concat):
                   column_len = min(nr_timebins, column_len)
-                Concat_responsive_cells = np.concatenate((Concat_responsive_cells[:,:column_len], cells_to_concat[:,:column_len]), axis=0)
-                nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
+                if (nr_timebins >= lower_bound_timebins_concat):
+                  Concat_responsive_cells = np.concatenate((Concat_responsive_cells[:,:column_len], cells_to_concat[:,:column_len]), axis=0)
+                  nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
             else:
                print("\033[1mNOTE:Session "+ session_name+" DOES NOT have F_responding"+"\033[0m")
 
