@@ -5,6 +5,7 @@ import pandas as pd
 import glob
 from scipy.stats import mode
 from scipy.stats import zscore
+from sklearn.decomposition import PCA
 from scipy import stats
 import shutil
 import matplotlib.pyplot as plt
@@ -45,7 +46,7 @@ def SEMf(Fluorescence_matrix):
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
 
-def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True):
+def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA = 1):
   getoutput=False
   if Session_folder=='manual_selection':
     getoutput=True
@@ -138,6 +139,16 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
+    if PCA == 1:
+      D = F_to_use[indices_responding,:]
+      mean = np.mean(D, axis=0)
+      std_dev = np.std(D, axis=0)
+      data_standardized = (D - mean) / std_dev
+      # Step 2: Perform PCA
+      pca = PCA(n_components=10) # You can change the number of components as needed
+      pca.fit(data_standardized)
+      eigenspectra = pca.explained_variance_ratio_
+
   else:
      perc_diff_wGray2_responding_only = np.nan
      fraction_responding =np.nan
@@ -146,6 +157,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
      avg_tuning_all_responding = np.nan
      avg_tuning_all_tuned_responding = np.nan
      responding_cells_df = []
+
+
+
 
   
   # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
