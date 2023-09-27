@@ -46,7 +46,7 @@ def SEMf(Fluorescence_matrix):
    SEM = Std/np.sqrt(nr_neurons)
    return SEM
 
-def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA = 1):
+def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
   getoutput=False
   if Session_folder=='manual_selection':
     getoutput=True
@@ -139,7 +139,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
     tuning_col = cell_OSI_dict['OSI'][indices_responding]
     responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
-    if PCA == 1:
+    if PCA_yn == 1:
       D = F_to_use[indices_responding,:]
       mean = np.mean(D, axis=0)
       std_dev = np.std(D, axis=0)
@@ -159,9 +159,6 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
      responding_cells_df = []
 
 
-
-
-  
   # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
   # for value, count in value_counts.items():
   #   print(f"{value}: {count} times")
