@@ -291,7 +291,12 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   nr_segmented_cells = [item[7] for item in comp_list]
   df_stim_vs_gray = pd.DataFrame({'Session name': sesson_names, 'P_val': p_values, '% change wrt grey2': Percent_increase, '% responding (>6%)': perc_responding_V,
                                   '% tuned (OSI>0.5)':perc_tuned_V, '% responding and tuned':perc_responding_tuned_V, 'Mean tuning of responsive': avg_tuning_all_responding_V, 'Mean tuning responsive and tuned': avg_tuning_all_tuned_responding_V, 
-                                  'Nr_segmented_cells': nr_segmented_cells})        
+                                  'Nr_segmented_cells': nr_segmented_cells}) 
+
+  s = 0
+  for k in nr_responsive_cells_dict:
+    s = s+nr_responsive_cells_dict[k]
+    nr_responsive_cells_dict[k] = [nr_responsive_cells_dict[k],s]       
   
   for col in zip(np.transpose(correlation_stats_tensor[:,:,0]), V_names_corrs):
       df_stim_vs_gray[col[1]] = col[0]
