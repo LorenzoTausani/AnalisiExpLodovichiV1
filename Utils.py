@@ -219,7 +219,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             indices_responding = return_dict['indices_responding']
 
             if Concat_responsive_cells is None:
-               Concat_responsive_cells = return_dict['D']
+               Concat_responsive_cells = return_dict['F_responding']
                column_len = Concat_responsive_cells.shape[1]
             elif ('F_responding' in return_dict):
               print('session '+ session_name +' has F_responding')
