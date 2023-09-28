@@ -220,6 +220,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
             if ('F_responding' in return_dict):
               if Concat_responsive_cells is None:
                 Concat_responsive_cells = return_dict['F_responding']
+                nr_responsive_cells_dict[session_name] = return_dict['nr_responsive_cells']
                 column_len = Concat_responsive_cells.shape[1]
               else:
                 cells_to_concat = return_dict['F_responding']
