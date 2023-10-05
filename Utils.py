@@ -16,38 +16,45 @@ import colorsys
 from collections import Counter
 
 def get_orientation_keys(Mean_SEM_dict):
-  numeric_keys_int = []
-  for key in Mean_SEM_dict.keys():
-      if key.isnumeric():
-          numeric_keys_int.append(int(key))
+  numeric_keys_int = [] #    # Creazione di una lista vuota chiamata 'numeric_keys_int' per memorizzare chiavi numeriche come interi.
+  for key in Mean_SEM_dict.keys(): # Iterazione attraverso tutte le chiavi nel dizionario 'Mean_SEM_dict'.
+      if key.isnumeric(): # Verifica se la chiave è una stringa numerica.
+          numeric_keys_int.append(int(key)) # Se la chiave è numerica, la converte in un intero e la aggiunge a 'numeric_keys_int'.
 
-  numeric_keys_int = sorted(numeric_keys_int)
-  numeric_keys = [str(num) for num in numeric_keys_int]
+  numeric_keys_int = sorted(numeric_keys_int) # Ordina la lista 'numeric_keys_int' in ordine crescente.
+  numeric_keys = [str(num) for num in numeric_keys_int]  # Creazione di una nuova lista 'numeric_keys' che contiene le chiavi di numeric_keys_int convertite in stringhe.
 
   return numeric_keys, numeric_keys_int
 
 def dF_F_Yuste_method(Fluorescence,timepoint):
+  '''
+  Input:
+  Fluorescence: matrice delle fluorescenze (nr cellule x timebins)
+  timepoint: intero che rappresenta il timepoint desiderato
+  '''
+  # Definizione di una costante 'Frames_10s' con il valore 10 secondi convertito in frames (alla freq. di acquisizione (30 Hz))
   Frames_10s = 10 * 30
-  traccia = Fluorescence[:,timepoint-Frames_10s:timepoint]
-  median_Fluorescence = np.percentile(traccia, 50,axis=1)
+  traccia = Fluorescence[:,timepoint-Frames_10s:timepoint] #prendi la traccia di tutte le cellule da 10secondi prima del timepoint fino al timepoint
+  median_Fluorescence = np.percentile(traccia, 50,axis=1) # Calcolo della mediana della 'traccia' lungo l'asse delle colonne (axis=1)
   Avg_first50 = []
-  for i,q25 in enumerate(median_Fluorescence):
-    traccia = Fluorescence[i,timepoint-Frames_10s:timepoint]
-    dati_prima_meta =  traccia[(traccia <= q25)]
-    Avg_first50.append(np.mean(dati_prima_meta))
-  Avg_first50 = np.array(Avg_first50)
-  dF_F_Yuste_timepoint = (Fluorescence[:,timepoint]-Avg_first50)/Avg_first50
-  return dF_F_Yuste_timepoint
+  for i,q50 in enumerate(median_Fluorescence): #per ciascuna cellula...
+    traccia = Fluorescence[i,timepoint-Frames_10s:timepoint] # prendi la fluorescenza tra 10secondi prima del timepoint fino al timepoint
+    dati_prima_meta =  traccia[(traccia <= q50)] #seleziona i valori della fluorescenza della cellula al di sotto della mediana
+    Avg_first50.append(np.mean(dati_prima_meta)) # appendi la media dei valori selezionati nella linea precedente alla lista delle medie della prima metà dei dati Avg_first50
+  Avg_first50 = np.array(Avg_first50)  # Convertire 'Avg_first50' in un array numpy.
+  dF_F_Yuste_timepoint = (Fluorescence[:,timepoint]-Avg_first50)/Avg_first50  # Calcolo di dF/F per il 'timepoint' corrente.
+  return dF_F_Yuste_timepoint #fluorescenza normalizzata del timepoint
 
 
 def SEMf(Fluorescence_matrix):
-   Std = np.nanstd(Fluorescence_matrix, axis=0)
-   nr_neurons = Fluorescence_matrix.shape[0] #andrebbe cambiato togliendo i nan
-   SEM = Std/np.sqrt(nr_neurons)
+   #funzione per calcolare la SEM nei dati di fluorescenza 
+   Std = np.nanstd(Fluorescence_matrix, axis=0) # Calcolo della deviazione standard lungo l'asse delle colonne della matrice 'Fluorescence_matrix'.
+   nr_neurons = Fluorescence_matrix.shape[0] # Determinazione del numero di neuroni considerando le righe della matrice. Andrebbe cambiato togliendo i nan
+   SEM = Std/np.sqrt(nr_neurons) # Calcolo dell'errore standard della media (SEM)
    return SEM
 
 def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
-  nr_PCA_components=10
+  nr_PCA_components=10  # Impostazione del numero di componenti PCA desiderate (predefinito a 10).
   getoutput=False
   if Session_folder=='manual_selection':
     getoutput=True
@@ -55,18 +62,19 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     drive.mount('/content/drive')
     #ricerda del folder della sessione di interesse
     Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
-    dir_list = os.listdir(Main_folder)
-    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
+    dir_list = os.listdir(Main_folder) # lista dei file e delle cartelle all'interno di Main_folder
+    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)]) # questa linea serve per creare il prompt di selezione del soggetto
     idx_sbj = int(input('Which subject?\n'+sbj_list))
     sbj_folder = os.path.join(Main_folder,dir_list[idx_sbj])
+    #le seguenti 4 righe fanno lo stesso delle precedenti 4, solo per sessione e non per soggetto
     dir_list = os.listdir(sbj_folder)
-    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)])
-    idx_session = int(input('Which session?\n'+sbj_list))
+    sess_list = '\n'.join([f'{i}: {sess}' for i, sess in enumerate(dir_list)])
+    idx_session = int(input('Which session?\n'+sess_list))
     session_name = dir_list[idx_session]
-    Session_folder = os.path.join(sbj_folder,session_name) # Session folder è il path alla sessione di interesse
-    os.chdir(Session_folder)
+    Session_folder = os.path.join(sbj_folder,session_name) 
+    os.chdir(Session_folder)# cambia la directory corrente alla cartella della sessione selezionata
 
-    #se vuoi rianalizzare cancella tutto
+    #se vuoi rianalizzare cancella tutti i foldere delle analisi preesistenti
     if Force_reanalysis:
       if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
         shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
