@@ -400,14 +400,14 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
 #        df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
     curr_folder_name = os.path.basename(Session_folder) #prima pre, poi psilo
     pre_psilo_names = curr_folder_name.split('-')
-    base =  os.path.join(*Session_folder.split('/')[:-1])
+    base =  os.path.join('/',*Session_folder.split('/')[:-1])
 
     for p in pre_psilo_names:
       SF = os.path.join(base, p)
       os.chdir(SF)
       Fneu = np.load('Fneu.npy')
       len_Fneu.append(Fneu.shape[1])
-      
+
   os.chdir(Session_folder)
            
   return df, StimVec, len_Fneu
