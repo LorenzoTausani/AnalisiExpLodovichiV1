@@ -98,9 +98,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     plt.pause(0.1)
     cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
     StimVec = StimVec[:cut]
-    df = df[df['N_frames']<cut]
+    df = df[df['N_frames']<cut] #taglia fuori END? da controllare
   F = F[iscell[:,0]==1,:cut]
   Fneu = Fneu[iscell[:,0]==1,:cut]
+
   F_neuSubtract = F - 0.7*Fneu
   F_neuSubtract[F_neuSubtract<0]=0
   #normalizzare?
@@ -333,6 +334,42 @@ def old_version_df(df):
     return df
 
 def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
+
+  def get_StimVec(df):
+    #chiamo ogni gray in funzione dell'orientamento precedente
+    def contains_numeric_characters(s):
+      return any(char.isdigit() for char in s)
+    
+    for it, row in df.iterrows():
+      if contains_numeric_characters(str(row['Orientamenti'])):
+        if str(row['Orientamenti'])[-1]=='+' or str(row['Orientamenti'])[-1]=='-': 
+          df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
+        else:
+          df['Orientamenti'][it] = str(row['Orientamenti'])
+      elif row['Orientamenti']=='gray':
+        orientamento = df['Orientamenti'][it-1]
+        df['Orientamenti'][it] = 'gray '+str(orientamento)
+    
+    if not_consider_direction:
+      for stim in df['Orientamenti']:
+          if '+' in stim:
+            df = old_version_df(df)
+            print('direction is not considered in the analysis')
+            break
+
+    # Crea un array vuoto per il vettore di stimoli
+    StimVec = np.empty(df['N_frames'].max(), dtype=object)
+    # Itera sul DataFrame e assegna il tipo di stimolo a ogni unità di tempo
+    top=0
+    for it, row in df.iterrows():
+        if it==0:
+          prec_row = row
+        else:
+          StimVec[top:row['N_frames']] = prec_row['Orientamenti']
+          top=row['N_frames']
+          prec_row = row
+    return StimVec
+
   # use the glob module to find the Excel file with the specified extension
   excel_files = glob.glob(os.path.join(Session_folder, "*.xlsx"))
   #print(excel_files[0])
@@ -340,51 +377,22 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   # Carica il file Excel in un DataFrame
   if len(excel_files)<2:
     df = pd.read_excel(excel_files[0])
+    StimVec = get_StimVec(df)
   else:
-     df_list = []
-     for ex_f in excel_files: #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
-        df_list.append(pd.read_excel(ex_f))
-     df = pd.concat(df_list, ignore_index=True)
-     begin_idxs = df[df['Computer_time'] == 0.0].index
-     for i in begin_idxs:
-        if i>0:#not the beginning
-           df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
-           df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
-           
-
-  #chiamo ogni gray in funzione dell'orientamento precedente
-  def contains_numeric_characters(s):
-    return any(char.isdigit() for char in s)
-
-  for it, row in df.iterrows():
-    if contains_numeric_characters(str(row['Orientamenti'])):
-      if str(row['Orientamenti'])[-1]=='+' or str(row['Orientamenti'])[-1]=='-': 
-        df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
-      else:
-        df['Orientamenti'][it] = str(row['Orientamenti'])
-    elif row['Orientamenti']=='gray':
-      orientamento = df['Orientamenti'][it-1]
-      df['Orientamenti'][it] = 'gray '+str(orientamento)
-  
-  if not_consider_direction:
-     for stim in df['Orientamenti']:
-        if '+' in stim:
-           df = old_version_df(df)
-           print('direction is not considered in the analysis')
-           break
-
-  # Crea un array vuoto per il vettore di stimoli
-  StimVec = np.empty(df['N_frames'].max(), dtype=object)
-  # Itera sul DataFrame e assegna il tipo di stimolo a ogni unità di tempo
-  top=0
-  for it, row in df.iterrows():
-      if it==0:
-        prec_row = row
-      else:
-        StimVec[top:row['N_frames']] = prec_row['Orientamenti']
-        top=row['N_frames']
-        prec_row = row
+     df = []
+     StimVec = []
+     for n,ex_f in enumerate(excel_files): #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
+        df.append(pd.read_excel(ex_f))
+        StimVec.append(get_StimVec(df[n]))
         
+    # SE SI VUOLE UNIFICARE IL DF (OBSOLETO)
+    #  df = pd.concat(df_list, ignore_index=True)
+    #  begin_idxs = df[df['Computer_time'] == 0.0].index
+    #  for i in begin_idxs:
+    #     if i>0:#not the beginning
+    #        df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
+    #        df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
+           
   return df, StimVec
 
 
