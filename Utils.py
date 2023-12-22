@@ -756,9 +756,9 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
 
 def Comparison_gray_stim(Fluorescence, logical_dict,session_name, omitplot = False):
   
-
+  n_b = 200
   str_keys, list_keys = get_orientation_keys(logical_dict)
-  Activity_arr = np.zeros((Fluorescence.shape[0],100,4))
+  Activity_arr = np.zeros((Fluorescence.shape[0],n_b,4))
   Activity_arr[:] = np.nan
   
   for c_ID,cell in enumerate(Fluorescence):
