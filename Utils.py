@@ -82,13 +82,13 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
   df, StimVec = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
+  
   F = np.load('F.npy')
   Fneu = np.load('Fneu.npy')
   iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
   if getoutput==True: #da rimuovere
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
-
 
   cut = len(StimVec)
   if getoutput:
@@ -345,6 +345,12 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
      for ex_f in excel_files: #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
         df_list.append(pd.read_excel(ex_f))
      df = pd.concat(df_list, ignore_index=True)
+     begin_idxs = df[df['Computer_time'] == 0.0].index
+     for i in begin_idxs:
+        if i>0:#not the beginning
+           df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
+           df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
+           
 
   #chiamo ogni gray in funzione dell'orientamento precedente
   def contains_numeric_characters(s):
