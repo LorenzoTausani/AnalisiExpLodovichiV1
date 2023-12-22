@@ -81,106 +81,118 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
       if os.path.isdir(os.path.join(Session_folder, 'Plots')):
         shutil.rmtree(os.path.join(Session_folder,'Plots/'))
 
-  df, StimVec = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
+  df_list, StimVec_list,len_Fneu_list = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
   
-  F = np.load('F.npy')
-  Fneu = np.load('Fneu.npy')
+  F_raw = np.load('F.npy')
+  Fneu_raw = np.load('Fneu.npy')
   iscell = np.load('iscell.npy') #iscell[:,0]==1 sono cellule
   if getoutput==True: #da rimuovere
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
 
-  cut = len(StimVec)
-  if getoutput:
-    plt.plot(np.mean(F,axis = 0))
-    # Show the plot
-    plt.show()
-    plt.pause(0.1)
-    cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
-    StimVec = StimVec[:cut]
-    df = df[df['N_frames']<cut] #taglia fuori END? da controllare
-  F = F[iscell[:,0]==1,:cut]
-  Fneu = Fneu[iscell[:,0]==1,:cut]
+  def single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files):
+    cut = len(StimVec)
+    if getoutput:
+      plt.plot(np.mean(F,axis = 0))
+      # Show the plot
+      plt.show()
+      plt.pause(0.1)
+      cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
+      StimVec = StimVec[:cut]
+      df = df[df['N_frames']<cut] #taglia fuori END? da controllare
+    F = F[iscell[:,0]==1,:cut]
+    Fneu = Fneu[iscell[:,0]==1,:cut]
 
-  F_neuSubtract = F - 0.7*Fneu
-  F_neuSubtract[F_neuSubtract<0]=0
-  #normalizzare?
+    F_neuSubtract = F - 0.7*Fneu
+    F_neuSubtract[F_neuSubtract<0]=0
+    #normalizzare?
 
-  os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
-  logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
-  # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
-  # DF_F = (F_neuSubtract - F0)/ F0
-  # DF_F_zscored = zscore(DF_F, axis=1)  
-  F_to_use = F_neuSubtract
-  if getoutput:
-    Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
-    if Yuste_yn == 1:
-      dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
-      for i in range(F.shape[1]):
-        if i>=300:
-          c=i-300
-          dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
-      dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
-      F_to_use = dF_F_Yuste
+    os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
+    logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
+    # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
+    # DF_F = (F_neuSubtract - F0)/ F0
+    # DF_F_zscored = zscore(DF_F, axis=1)  
+    F_to_use = F_neuSubtract
+    if getoutput:
+      Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
+      if Yuste_yn == 1:
+        dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
+        for i in range(F.shape[1]):
+          if i>=300:
+            c=i-300
+            dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
+        dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
+        F_to_use = dF_F_Yuste
 
-  Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
-  Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
-  cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
-  Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
+    Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
+    Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
+    cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
+    Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
+    
+
+    os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
+    p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
+    indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
+    indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
+    nr_segmented_cells = len(perc_diff_wGray2_vector)
+    nr_responsive_cells = len(indices_responding)
+
+    if nr_responsive_cells>0:
+      fraction_responding = nr_responsive_cells/len(perc_diff_wGray2_vector)
+      _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = True)
+      fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
+      indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
+      fraction_responding_tuned =  len(indices_responding_and_tuned)/nr_responsive_cells
+      avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
+      avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
+
+      session_name_column = [session_name] * nr_responsive_cells
+      session_name_column = [s_name+'_cell'+str(nr) for nr,s_name in enumerate(session_name_column)]
+      perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
+      tuning_col = cell_OSI_dict['OSI'][indices_responding]
+      responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
+      # if PCA_yn == 1 and nr_responsive_cells>nr_PCA_components:
+      #   F_responding = F_to_use[indices_responding,:]
+      #   mean = np.mean(F_responding, axis=0)
+      #   std_dev = np.std(F_responding, axis=0)
+      #   data_standardized = (F_responding - mean) / std_dev
+      #   # Step 2: Perform PCA
+      #   pca = PCA(n_components=nr_PCA_components) # You can change the number of components as needed
+      #   pca.fit(data_standardized)
+      #   eigenspectra = pca.explained_variance_ratio_
+
+    else:
+      perc_diff_wGray2_responding_only = np.nan
+      fraction_responding =np.nan
+      fraction_tuned =  np.nan
+      fraction_responding_tuned = np.nan
+      avg_tuning_all_responding = np.nan
+      avg_tuning_all_tuned_responding = np.nan
+      responding_cells_df = []
+
+
+    # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
+    # for value, count in value_counts.items():
+    #   print(f"{value}: {count} times")
+
+    Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F_neuSubtract')
+    # if getoutput==True: #da rimouovere
+    #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
+    # else:
+    #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=[],Fluorescence_type='F')
+    #if getoutput:
+    return locals()
   
- 
-  os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
-  p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
-  indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
-  indices_responding = np.where([perc_diff_wGray2_vector>6])[1]
-  nr_segmented_cells = len(perc_diff_wGray2_vector)
-  nr_responsive_cells = len(indices_responding)
+  c=0
+  for df, StimVec, len_Fneu in zip(df_list, StimVec_list,len_Fneu_list):
+    F = F_raw[:,c:c+len_Fneu]
+    Fneu = Fneu_raw[:,c:c+len_Fneu]
+    c = len_Fneu
+    return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
+    for key in return_dict:
+      globals()[key] = return_dict[key]
+    
 
-  if nr_responsive_cells>0:
-    fraction_responding = nr_responsive_cells/len(perc_diff_wGray2_vector)
-    _,perc_diff_wGray2_responding_only,_ =Comparison_gray_stim(F_to_use[indices_tuned,:], logical_dict,session_name, omitplot = True)
-    fraction_tuned =  len(indices_tuned)/len(perc_diff_wGray2_vector)
-    indices_responding_and_tuned = np.intersect1d(indices_responding,indices_tuned)
-    fraction_responding_tuned =  len(indices_responding_and_tuned)/nr_responsive_cells
-    avg_tuning_all_responding= np.mean(cell_OSI_dict['OSI'][indices_responding])
-    avg_tuning_all_tuned_responding = np.mean(cell_OSI_dict['OSI'][indices_responding_and_tuned])
-
-    session_name_column = [session_name] * nr_responsive_cells
-    session_name_column = [s_name+'_cell'+str(nr) for nr,s_name in enumerate(session_name_column)]
-    perc_diff_wGray2_col = perc_diff_wGray2_vector[indices_responding]
-    tuning_col = cell_OSI_dict['OSI'][indices_responding]
-    responding_cells_df = pd.DataFrame({'responding cell name': session_name_column, '% change wrt grey2': perc_diff_wGray2_col, 'OSI': tuning_col})
-    if PCA_yn == 1 and nr_responsive_cells>nr_PCA_components:
-      F_responding = F_to_use[indices_responding,:]
-      mean = np.mean(F_responding, axis=0)
-      std_dev = np.std(F_responding, axis=0)
-      data_standardized = (F_responding - mean) / std_dev
-      # Step 2: Perform PCA
-      pca = PCA(n_components=nr_PCA_components) # You can change the number of components as needed
-      pca.fit(data_standardized)
-      eigenspectra = pca.explained_variance_ratio_
-
-  else:
-     perc_diff_wGray2_responding_only = np.nan
-     fraction_responding =np.nan
-     fraction_tuned =  np.nan
-     fraction_responding_tuned = np.nan
-     avg_tuning_all_responding = np.nan
-     avg_tuning_all_tuned_responding = np.nan
-     responding_cells_df = []
-
-
-  # value_counts = Counter(cell_OSI_dict['PrefOr'][indices_tuned])
-  # for value, count in value_counts.items():
-  #   print(f"{value}: {count} times")
-
-  Plotting_functions.summaryPlot_AvgActivity(Mean_SEM_dict_F,session_name, Fluorescence_type = 'F_neuSubtract')
-  # if getoutput==True: #da rimouovere
-  #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=stat,Fluorescence_type='F')
-  # else:
-  #   Plotting_functions.summaryPlot_OSI(cell_OSI_dict,Cell_Max_dict_F,session_name,stat=[],Fluorescence_type='F')
-  #if getoutput:
-  return locals()
 
 def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing_dict_files=True, lower_bound_timebins_concat = 45000):
   from google.colab import drive
@@ -373,27 +385,30 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   # use the glob module to find the Excel file with the specified extension
   excel_files = glob.glob(os.path.join(Session_folder, "*.xlsx"))
   #print(excel_files[0])
+  len_Fneu = []
+  df = []
+  StimVec = []
+  for n,ex_f in enumerate(excel_files): #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
+    df.append(pd.read_excel(ex_f))
+    StimVec.append(get_StimVec(df[n]))
+# SE SI VUOLE UNIFICARE IL DF (OBSOLETO)
+#  df = pd.concat(df_list, ignore_index=True)
+#  begin_idxs = df[df['Computer_time'] == 0.0].index
+#  for i in begin_idxs:
+#     if i>0:#not the beginning
+#        df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
+#        df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
+    curr_folder_name = os.path.basename(Session_folder) #prima pre, poi psilo
+    pre_psilo_names = curr_folder_name.split('-')
+    base =  os.path.join(*Session_folder.split('/')[:-1])
 
-  # Carica il file Excel in un DataFrame
-  if len(excel_files)<2:
-    df = pd.read_excel(excel_files[0])
-    StimVec = get_StimVec(df)
-  else:
-     df = []
-     StimVec = []
-     for n,ex_f in enumerate(excel_files): #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
-        df.append(pd.read_excel(ex_f))
-        StimVec.append(get_StimVec(df[n]))
-        
-    # SE SI VUOLE UNIFICARE IL DF (OBSOLETO)
-    #  df = pd.concat(df_list, ignore_index=True)
-    #  begin_idxs = df[df['Computer_time'] == 0.0].index
-    #  for i in begin_idxs:
-    #     if i>0:#not the beginning
-    #        df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
-    #        df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
+    for p in pre_psilo_names:
+      SF = base + p
+      os.chdir(SF)
+      Fneu = np.load('Fneu.npy')
+      len_Fneu.append(Fneu.shape[1])
            
-  return df, StimVec
+  return df, StimVec, len_Fneu
 
 
 def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
