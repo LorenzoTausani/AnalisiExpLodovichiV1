@@ -403,10 +403,12 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
     base =  os.path.join(*Session_folder.split('/')[:-1])
 
     for p in pre_psilo_names:
-      SF = base + p
+      SF = os.path.join(base, p)
       os.chdir(SF)
       Fneu = np.load('Fneu.npy')
       len_Fneu.append(Fneu.shape[1])
+      
+  os.chdir(Session_folder)
            
   return df, StimVec, len_Fneu
 
