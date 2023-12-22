@@ -338,7 +338,14 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   #print(excel_files[0])
 
   # Carica il file Excel in un DataFrame
-  df = pd.read_excel(excel_files[0])
+  if len(excel_files)<2:
+    df = pd.read_excel(excel_files[0])
+  else:
+     df_list = []
+     for ex_f in excel_files: #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
+        df_list.append(pd.read_excel(ex_f))
+     df = pd.concat(df_list, ignore_index=True)
+
   #chiamo ogni gray in funzione dell'orientamento precedente
   def contains_numeric_characters(s):
     return any(char.isdigit() for char in s)
