@@ -183,14 +183,15 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #if getoutput:
     return locals()
   
+  results_list = []
   c=0
   for df, StimVec, len_Fneu in zip(df_list, StimVec_list,len_Fneu_list):
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
-    for key in return_dict:
-      globals()[key] = return_dict[key]
+    results_list.append(return_dict)
+  return results_list
     
 
 
