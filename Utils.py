@@ -11,6 +11,7 @@ import shutil
 import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
+from Generic_tools import *
 import ast
 import colorsys
 from collections import Counter
@@ -63,9 +64,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #ricerda del folder della sessione di interesse
     Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
     dir_list = os.listdir(Main_folder) # lista dei file e delle cartelle all'interno di Main_folder
+    sbj = multioption_prompt(dir_list, in_prompt='Which subject?')
     sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)]) # questa linea serve per creare il prompt di selezione del soggetto
     idx_sbj = int(input('Which subject?\n'+sbj_list))
-    sbj_folder = os.path.join(Main_folder,dir_list[idx_sbj])
+    sbj_folder = os.path.join(Main_folder,sbj)
     #le seguenti 4 righe fanno lo stesso delle precedenti 4, solo per sessione e non per soggetto
     dir_list = os.listdir(sbj_folder)
     sess_list = '\n'.join([f'{i}: {sess}' for i, sess in enumerate(dir_list)])
