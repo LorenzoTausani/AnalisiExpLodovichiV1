@@ -7,11 +7,11 @@ from scipy.stats import mode
 from scipy.stats import zscore
 from sklearn.decomposition import PCA
 from scipy import stats
-import shutil
 import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
 from Generic_tools.Generic_list_operations import *
+from Generic_tools.Generic_foldering_operations import *
 import ast
 import colorsys
 from collections import Counter
@@ -71,10 +71,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
     #se vuoi rianalizzare cancella tutti i foldere delle analisi preesistenti
     if Force_reanalysis:
-      if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
-        shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
-      if os.path.isdir(os.path.join(Session_folder, 'Plots')):
-        shutil.rmtree(os.path.join(Session_folder,'Plots/'))
+      remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
 
   df_list, StimVec_list,len_Fneu_list = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
   
@@ -227,11 +224,8 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
           if (Analyzed_files_notPresent or Force_reanalysis):
             print("\033[1mAnalyzing session "+ session_name+"\033[0m")
             if Force_reanalysis and not(Analyzed_files_notPresent):
-              if os.path.isdir(os.path.join(Session_folder, 'Analyzed_data')):
-                shutil.rmtree(os.path.join(Session_folder,'Analyzed_data/'))
-              if os.path.isdir(os.path.join(Session_folder, 'Plots')):
-                shutil.rmtree(os.path.join(Session_folder,'Plots/'))
-
+              remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
+              
             return_dict = single_session_analysis(Session_folder=Session_folder, session_name=session_name, change_existing_dict_files=change_existing_dict_files)
             indices_responding = return_dict['indices_responding']
             if ('F_responding' in return_dict):
