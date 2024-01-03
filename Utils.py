@@ -13,6 +13,7 @@ from Plotting_functions import *
 from Generic_tools.Generic_list_operations import *
 from Generic_tools.Generic_foldering_operations import *
 from Generic_tools.Generic_numeric_operations import *
+from Generic_tools.Generic_string_operations import *
 import ast
 import colorsys
 from collections import Counter
@@ -331,10 +332,7 @@ def old_version_df(df):
 def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
 
   def get_StimVec(df):
-    #chiamo ogni gray in funzione dell'orientamento precedente
-    def contains_numeric_characters(s):
-      return any(char.isdigit() for char in s)
-    
+    #chiamo ogni gray in funzione dell'orientamento precedente    
     for it, row in df.iterrows():
       if contains_numeric_characters(str(row['Orientamenti'])):
         if str(row['Orientamenti'])[-1]=='+' or str(row['Orientamenti'])[-1]=='-': 
@@ -366,7 +364,7 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
     return StimVec
 
   # use the glob module to find the Excel file with the specified extension
-  excel_files = glob.glob(os.path.join(Session_folder, "*.xlsx"))
+  excel_files = find_files_by_extension(directory = Session_folder, extension='.xlsx', recursive = False)
   #print(excel_files[0])
   len_Fneu = []
   df = []
