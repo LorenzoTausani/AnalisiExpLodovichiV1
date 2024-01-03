@@ -65,14 +65,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     Main_folder = '/content/drive/MyDrive/esperimenti2p_Tausani/'
     dir_list = os.listdir(Main_folder) # lista dei file e delle cartelle all'interno di Main_folder
     sbj = multioption_prompt(dir_list, in_prompt='Which subject?')
-    sbj_list = '\n'.join([f'{i}: {sbj}' for i, sbj in enumerate(dir_list)]) # questa linea serve per creare il prompt di selezione del soggetto
-    idx_sbj = int(input('Which subject?\n'+sbj_list))
     sbj_folder = os.path.join(Main_folder,sbj)
-    #le seguenti 4 righe fanno lo stesso delle precedenti 4, solo per sessione e non per soggetto
     dir_list = os.listdir(sbj_folder)
-    sess_list = '\n'.join([f'{i}: {sess}' for i, sess in enumerate(dir_list)])
-    idx_session = int(input('Which session?\n'+sess_list))
-    session_name = dir_list[idx_session]
+    session_name = multioption_prompt(dir_list, in_prompt='Which session?')
     Session_folder = os.path.join(sbj_folder,session_name) 
     os.chdir(Session_folder)# cambia la directory corrente alla cartella della sessione selezionata
 
