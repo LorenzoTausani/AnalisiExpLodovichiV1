@@ -12,6 +12,7 @@ import Plotting_functions
 from Plotting_functions import *
 from Generic_tools.Generic_list_operations import *
 from Generic_tools.Generic_foldering_operations import *
+from Generic_tools.Generic_numeric_operations import *
 import ast
 import colorsys
 from collections import Counter
@@ -45,14 +46,6 @@ def dF_F_Yuste_method(Fluorescence,timepoint):
   Avg_first50 = np.array(Avg_first50)  # Convertire 'Avg_first50' in un array numpy.
   dF_F_Yuste_timepoint = (Fluorescence[:,timepoint]-Avg_first50)/Avg_first50  # Calcolo di dF/F per il 'timepoint' corrente.
   return dF_F_Yuste_timepoint #fluorescenza normalizzata del timepoint
-
-
-def SEMf(Fluorescence_matrix):
-   #funzione per calcolare la SEM nei dati di fluorescenza 
-   Std = np.nanstd(Fluorescence_matrix, axis=0) # Calcolo della deviazione standard lungo l'asse delle colonne della matrice 'Fluorescence_matrix'.
-   nr_neurons = Fluorescence_matrix.shape[0] # Determinazione del numero di neuroni considerando le righe della matrice. Andrebbe cambiato togliendo i nan
-   SEM = Std/np.sqrt(nr_neurons) # Calcolo dell'errore standard della media (SEM)
-   return SEM
 
 def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
   nr_PCA_components=10  # Impostazione del numero di componenti PCA desiderate (predefinito a 10).
