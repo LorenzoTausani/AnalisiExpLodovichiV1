@@ -11,7 +11,7 @@ import shutil
 import matplotlib.pyplot as plt
 import Plotting_functions
 from Plotting_functions import *
-from Generic_tools import *
+from Generic_tools.Generic_list_operations import *
 import ast
 import colorsys
 from collections import Counter
