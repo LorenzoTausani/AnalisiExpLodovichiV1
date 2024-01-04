@@ -14,6 +14,7 @@ from Generic_tools.Generic_list_operations import *
 from Generic_tools.Generic_foldering_operations import *
 from Generic_tools.Generic_numeric_operations import *
 from Generic_tools.Generic_string_operations import *
+from Generic_tools.Generic_stimulation_handler import *
 import ast
 import colorsys
 from collections import Counter
@@ -309,24 +310,53 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
 
   return locals()
 
+
+class CL_stimulation_data(stimulation_data):
    
+   def old_version_df(self,df):
+        for idx,lbl in enumerate(df[self.Stim_var]):
+            if contains_numeric_characters(lbl):
+                df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
+        return df
 
-def old_version_df(df):
-    def contains_numeric(string):
-        pattern = r'\d+'
-        if re.search(pattern, string):
-            return True
-        else:
-            return False
-
-    def exclude_chars(string):
-        pattern = r'\.0[+-]'
-        return re.sub(pattern, '', string)
-
-    for idx,lbl in enumerate(df['Orientamenti']):
-        if contains_numeric(lbl):
-            df['Orientamenti'][idx]=exclude_chars(lbl)
+   def Stim_var_rename(self, stimulation_df: pd.DataFrame, not_consider_direction = True) -> pd.DataFrame:
+      #chiamo ogni gray in funzione dell'orientamento precedente    
+      for it, row in stimulation_df.iterrows():
+        if contains_numeric_characters(str(row[self.Stim_var])):
+          if str(row[self.Stim_var])[-1]=='+' or str(row[self.Stim_var])[-1]=='-': 
+            stimulation_df[self.Stim_var][it] = str(int(float(row[self.Stim_var][:-1])))+row[self.Stim_var][-1]
+          else:
+            stimulation_df[self.Stim_var][it] = str(row[self.Stim_var])
+        elif row[self.Stim_var]=='gray':
+          orientamento = stimulation_df[self.Stim_var][it-1]
+          stimulation_df[self.Stim_var][it] = 'gray '+str(orientamento)
+      
+      if not_consider_direction:
+        for stim in stimulation_df[self.Stim_var]:
+            if '+' in stim:
+              stimulation_df = self.old_version_df(stimulation_df)
+              print('direction is not considered in the analysis')
+              break
     
+   def get_len_phys_recording(self, stimulation_df: pd.DataFrame) -> Union[int, float]:
+      out_list = []
+      curr_folder_name = os.path.basename(self.path) #prima pre, poi psilo
+      pre_psilo_names = curr_folder_name.split('-')
+      base =  os.path.join('/',*self.path.split('/')[:-1])
+
+      for p in pre_psilo_names:
+        SF = os.path.join(base, p)
+        os.chdir(SF)
+        Fneu = np.load('Fneu.npy')
+        out_list.append(Fneu.shape[1])
+      
+      os.chdir(self.path)
+      return out_list
+
+def old_version_df(self,df):
+    for idx,lbl in enumerate(df[self.Stim_var]):
+        if contains_numeric_characters(lbl):
+            df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
     return df
 
 def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
