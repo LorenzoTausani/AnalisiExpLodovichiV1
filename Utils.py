@@ -372,13 +372,6 @@ def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
   for n,ex_f in enumerate(excel_files): #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
     df.append(pd.read_excel(ex_f))
     StimVec.append(get_StimVec(df[n]))
-# SE SI VUOLE UNIFICARE IL DF (OBSOLETO)
-#  df = pd.concat(df_list, ignore_index=True)
-#  begin_idxs = df[df['Computer_time'] == 0.0].index
-#  for i in begin_idxs:
-#     if i>0:#not the beginning
-#        df.iloc[i:,1]=df.iloc[i:,1]+df.iloc[i-1,1] #Computer time
-#        df.iloc[i:,2]=df.iloc[i:,2]+df.iloc[i-1,2] #N frames
     curr_folder_name = os.path.basename(Session_folder) #prima pre, poi psilo
     pre_psilo_names = curr_folder_name.split('-')
     base =  os.path.join('/',*Session_folder.split('/')[:-1])
