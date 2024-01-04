@@ -68,7 +68,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     if Force_reanalysis:
       remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
 
-  df_list, StimVec_list,len_Fneu_list = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
+  stim_data = CL_stimulation_data(Session_folder, Stim_var = 'Orientamenti', Time_var = 'N_frames',not_consider_direction = False)
+  df_list, StimVec_list,len_Fneu_list = stim_data.get_stim_data()
+  df_list_old, StimVec_list_old,len_Fneu_list_old = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
+
+  return df_list, StimVec_list,len_Fneu_list,df_list_old, StimVec_list_old,len_Fneu_list_old 
   
   F_raw = np.load('F.npy')
   Fneu_raw = np.load('Fneu.npy')
@@ -313,13 +317,17 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
 
 class CL_stimulation_data(stimulation_data):
    
+   def __init__(self, path: str, Stim_var: str = 'Orientamenti', Time_var: str = 'N_frames', not_consider_direction = False):
+        super().__init__(path,Stim_var,Time_var)
+        self.not_consider_direction = not_consider_direction
+   
    def old_version_df(self,df):
         for idx,lbl in enumerate(df[self.Stim_var]):
             if contains_numeric_characters(lbl):
                 df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
         return df
 
-   def Stim_var_rename(self, stimulation_df: pd.DataFrame, not_consider_direction = True) -> pd.DataFrame:
+   def Stim_var_rename(self, stimulation_df: pd.DataFrame) -> pd.DataFrame:
       #chiamo ogni gray in funzione dell'orientamento precedente    
       for it, row in stimulation_df.iterrows():
         if contains_numeric_characters(str(row[self.Stim_var])):
@@ -331,7 +339,7 @@ class CL_stimulation_data(stimulation_data):
           orientamento = stimulation_df[self.Stim_var][it-1]
           stimulation_df[self.Stim_var][it] = 'gray '+str(orientamento)
       
-      if not_consider_direction:
+      if self.not_consider_direction:
         for stim in stimulation_df[self.Stim_var]:
             if '+' in stim:
               stimulation_df = self.old_version_df(stimulation_df)
