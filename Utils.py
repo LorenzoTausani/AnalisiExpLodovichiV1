@@ -19,6 +19,54 @@ import ast
 import colorsys
 from collections import Counter
 
+class CL_stimulation_data(stimulation_data):
+   
+   def __init__(self, path: str, Stim_var: str = 'Orientamenti', Time_var: str = 'N_frames', not_consider_direction = False):
+        super().__init__(path,Stim_var,Time_var)
+        self.not_consider_direction = not_consider_direction
+   
+   def old_version_df(self,df):
+        for idx,lbl in enumerate(df[self.Stim_var]):
+            if contains_character(lbl,pattern = r'\d+'):
+                df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
+        return df
+
+   def Stim_var_rename(self, stimulation_df: pd.DataFrame) -> pd.DataFrame:
+      #chiamo ogni gray in funzione dell'orientamento precedente    
+      for it, row in stimulation_df.iterrows():
+        if contains_character(str(row[self.Stim_var]), pattern = r'\d+'):
+          if str(row[self.Stim_var])[-1]=='+' or str(row[self.Stim_var])[-1]=='-': 
+            stimulation_df[self.Stim_var][it] = str(int(float(row[self.Stim_var][:-1])))+row[self.Stim_var][-1]
+          else:
+            stimulation_df[self.Stim_var][it] = str(row[self.Stim_var])
+        elif row[self.Stim_var]=='gray':
+          orientamento = stimulation_df[self.Stim_var][it-1]
+          stimulation_df[self.Stim_var][it] = 'gray '+str(orientamento)
+      
+      if self.not_consider_direction:
+        for stim in stimulation_df[self.Stim_var]:
+            if '+' in stim:
+              stimulation_df = self.old_version_df(stimulation_df)
+              print('direction is not considered in the analysis')
+              break
+
+      return stimulation_df
+    
+   def get_len_phys_recording(self, stimulation_df: pd.DataFrame) -> Union[int, float]:
+      out_list = []
+      curr_folder_name = os.path.basename(self.path) #prima pre, poi psilo
+      pre_psilo_names = curr_folder_name.split('-')
+      base =  os.path.join('/',*self.path.split('/')[:-1])
+
+      for p in pre_psilo_names:
+        SF = os.path.join(base, p)
+        os.chdir(SF)
+        Fneu = np.load('Fneu.npy')
+        out_list.append(Fneu.shape[1])
+      
+      os.chdir(self.path)
+      return out_list
+
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = [] #    # Creazione di una lista vuota chiamata 'numeric_keys_int' per memorizzare chiavi numeriche come interi.
   for key in Mean_SEM_dict.keys(): # Iterazione attraverso tutte le chiavi nel dizionario 'Mean_SEM_dict'.
@@ -79,18 +127,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     stat = stat[iscell[:,0]==1]
 
   def single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files):
-    cut = len(StimVec)
-    if getoutput:
-      plt.plot(np.mean(F,axis = 0))
-      # Show the plot
-      plt.show()
-      plt.pause(0.1)
-      cut = int(input('at which frame you want to cut the series (all = ' +str(len(StimVec))+ ')?'))
-      StimVec = StimVec[:cut]
-      df = df[df['N_frames']<cut] #taglia fuori END? da controllare
-    F = F[iscell[:,0]==1,:cut]
-    Fneu = Fneu[iscell[:,0]==1,:cut]
-
+    StimVec, df, [F,Fneu] = cut_recording(StimVec,df, [F[iscell[:,0]==1,:], Fneu[iscell[:,0]==1,:]] , df_Time_var='N_frames', do_custom_cutting = getoutput)
     F_neuSubtract = F - 0.7*Fneu
     F_neuSubtract[F_neuSubtract<0]=0
     #normalizzare?
@@ -312,60 +349,7 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   return locals()
 
 
-class CL_stimulation_data(stimulation_data):
-   
-   def __init__(self, path: str, Stim_var: str = 'Orientamenti', Time_var: str = 'N_frames', not_consider_direction = False):
-        super().__init__(path,Stim_var,Time_var)
-        self.not_consider_direction = not_consider_direction
-   
-   def old_version_df(self,df):
-        for idx,lbl in enumerate(df[self.Stim_var]):
-            if contains_numeric_characters(lbl):
-                df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
-        return df
-
-   def Stim_var_rename(self, stimulation_df: pd.DataFrame) -> pd.DataFrame:
-      #chiamo ogni gray in funzione dell'orientamento precedente    
-      for it, row in stimulation_df.iterrows():
-        if contains_numeric_characters(str(row[self.Stim_var])):
-          if str(row[self.Stim_var])[-1]=='+' or str(row[self.Stim_var])[-1]=='-': 
-            stimulation_df[self.Stim_var][it] = str(int(float(row[self.Stim_var][:-1])))+row[self.Stim_var][-1]
-          else:
-            stimulation_df[self.Stim_var][it] = str(row[self.Stim_var])
-        elif row[self.Stim_var]=='gray':
-          orientamento = stimulation_df[self.Stim_var][it-1]
-          stimulation_df[self.Stim_var][it] = 'gray '+str(orientamento)
-      
-      if self.not_consider_direction:
-        for stim in stimulation_df[self.Stim_var]:
-            if '+' in stim:
-              stimulation_df = self.old_version_df(stimulation_df)
-              print('direction is not considered in the analysis')
-              break
-
-      return stimulation_df
-    
-   def get_len_phys_recording(self, stimulation_df: pd.DataFrame) -> Union[int, float]:
-      out_list = []
-      curr_folder_name = os.path.basename(self.path) #prima pre, poi psilo
-      pre_psilo_names = curr_folder_name.split('-')
-      base =  os.path.join('/',*self.path.split('/')[:-1])
-
-      for p in pre_psilo_names:
-        SF = os.path.join(base, p)
-        os.chdir(SF)
-        Fneu = np.load('Fneu.npy')
-        out_list.append(Fneu.shape[1])
-      
-      os.chdir(self.path)
-      return out_list
-
 def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
-    def contains_plus_character(vector): #function to check if any element of df['Orientamenti'].unique() contains a '+' sign
-      for string in vector:
-          if '+' in string:
-              return True
-      return False
     SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
     logical_dict_filename = session_name+'_logical_dict.npz'
     if not(os.path.isfile(logical_dict_filename)) or change_existing_dict_files==True:
@@ -384,7 +368,8 @@ def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True
                     indici_array = np.column_stack((indici_inizio_gruppi, indici_fine_gruppi))
                     logical_dict[str(stim)] = indici_array
 
-        if contains_plus_character(df['Orientamenti'].unique()):
+        if any(contains_character(string, pattern=r'\+') for string in df['Orientamenti'].unique()): #check if any element of df['Orientamenti'].unique() contains a '+' sign
+
           #ora creo le voci integrate
           ors  = df['Orientamenti'].unique()
           pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
