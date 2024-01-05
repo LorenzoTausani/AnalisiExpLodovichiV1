@@ -172,16 +172,13 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     df = stim_data_obj.Stim_dfs[n_it]; StimVec = stim_data_obj.StimVecs[n_it]
     StimVec, df, [F,Fneu] = cut_recording(StimVec,df, [F[iscell[:,0]==1,:], Fneu[iscell[:,0]==1,:]] , df_Time_var='N_frames', do_custom_cutting = getoutput)
     F_neuSubtract = F - 0.7*Fneu
-    F_neuSubtract[F_neuSubtract<0]=0
-    #normalizzare?
-
+    F_neuSubtract[F_neuSubtract<0]=0 #normalizzare?
+    F_to_use = F_neuSubtract
+    
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
-
-    # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
-    # DF_F = (F_neuSubtract - F0)/ F0
-    # DF_F_zscored = zscore(DF_F, axis=1)  
-    F_to_use = F_neuSubtract
+    # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis];DF_F = (F_neuSubtract - F0)/ F0; DF_F_zscored = zscore(DF_F, axis=1)
+    
     if getoutput:
       Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
       if Yuste_yn == 1:
