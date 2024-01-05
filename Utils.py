@@ -66,7 +66,7 @@ class CL_stimulation_data(stimulation_data):
       os.chdir(self.path)
       return out_list
    
-   def add_keys_logicalDict(logical_dict):
+   def add_keys_logicalDict(self, logical_dict):
       stim_names= logical_dict.keys()
       if any(contains_character(string, pattern=r'\+') for string in stim_names): #check if any element of stim_names contains a '+' sign
         #ora creo le voci integrate: orientamenti, direzioni drift [+,-] e relativi grays
