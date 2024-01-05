@@ -70,7 +70,6 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
   stim_data = CL_stimulation_data(Session_folder, Stim_var = 'Orientamenti', Time_var = 'N_frames',not_consider_direction = False)
   df_list, StimVec_list,len_Fneu_list = stim_data.get_stim_data()
-  df_list_old, StimVec_list_old,len_Fneu_list_old = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
   
   F_raw = np.load('F.npy')
   Fneu_raw = np.load('Fneu.npy')
