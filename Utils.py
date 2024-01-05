@@ -345,6 +345,8 @@ class CL_stimulation_data(stimulation_data):
               stimulation_df = self.old_version_df(stimulation_df)
               print('direction is not considered in the analysis')
               break
+
+      return stimulation_df
     
    def get_len_phys_recording(self, stimulation_df: pd.DataFrame) -> Union[int, float]:
       out_list = []
