@@ -71,8 +71,6 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   stim_data = CL_stimulation_data(Session_folder, Stim_var = 'Orientamenti', Time_var = 'N_frames',not_consider_direction = False)
   df_list, StimVec_list,len_Fneu_list = stim_data.get_stim_data()
   df_list_old, StimVec_list_old,len_Fneu_list_old = Df_loader_and_StimVec(Session_folder, not_consider_direction = False)
-
-  return df_list, StimVec_list,len_Fneu_list,df_list_old, StimVec_list_old,len_Fneu_list_old 
   
   F_raw = np.load('F.npy')
   Fneu_raw = np.load('Fneu.npy')
@@ -362,70 +360,6 @@ class CL_stimulation_data(stimulation_data):
       
       os.chdir(self.path)
       return out_list
-
-def old_version_df(self,df):
-    for idx,lbl in enumerate(df[self.Stim_var]):
-        if contains_numeric_characters(lbl):
-            df[self.Stim_var][idx]=exclude_chars(lbl, pattern=r'\.0[+-]')
-    return df
-
-def Df_loader_and_StimVec(Session_folder, not_consider_direction = True):
-
-  def get_StimVec(df):
-    #chiamo ogni gray in funzione dell'orientamento precedente    
-    for it, row in df.iterrows():
-      if contains_numeric_characters(str(row['Orientamenti'])):
-        if str(row['Orientamenti'])[-1]=='+' or str(row['Orientamenti'])[-1]=='-': 
-          df['Orientamenti'][it] = str(int(float(row['Orientamenti'][:-1])))+row['Orientamenti'][-1]
-        else:
-          df['Orientamenti'][it] = str(row['Orientamenti'])
-      elif row['Orientamenti']=='gray':
-        orientamento = df['Orientamenti'][it-1]
-        df['Orientamenti'][it] = 'gray '+str(orientamento)
-    
-    if not_consider_direction:
-      for stim in df['Orientamenti']:
-          if '+' in stim:
-            df = old_version_df(df)
-            print('direction is not considered in the analysis')
-            break
-
-    # Crea un array vuoto per il vettore di stimoli
-    StimVec = np.empty(df['N_frames'].max(), dtype=object)
-    # Itera sul DataFrame e assegna il tipo di stimolo a ogni unità di tempo
-    top=0
-    for it, row in df.iterrows():
-        if it==0:
-          prec_row = row
-        else:
-          StimVec[top:row['N_frames']] = prec_row['Orientamenti']
-          top=row['N_frames']
-          prec_row = row
-    return StimVec
-
-  # use the glob module to find the Excel file with the specified extension
-  excel_files = find_files_by_extension(directory = Session_folder, extension='.xlsx', recursive = False)
-  #print(excel_files[0])
-  len_Fneu = []
-  df = []
-  StimVec = []
-  for n,ex_f in enumerate(excel_files): #pre e psilo sono sempre ordinati. No need di ordinare ad hoc
-    df.append(pd.read_excel(ex_f))
-    StimVec.append(get_StimVec(df[n]))
-    curr_folder_name = os.path.basename(Session_folder) #prima pre, poi psilo
-    pre_psilo_names = curr_folder_name.split('-')
-    base =  os.path.join('/',*Session_folder.split('/')[:-1])
-
-    for p in pre_psilo_names:
-      SF = os.path.join(base, p)
-      os.chdir(SF)
-      Fneu = np.load('Fneu.npy')
-      len_Fneu.append(Fneu.shape[1])
-
-  os.chdir(Session_folder)
-           
-  return df, StimVec, len_Fneu
-
 
 def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
     def contains_plus_character(vector): #function to check if any element of df['Orientamenti'].unique() contains a '+' sign
