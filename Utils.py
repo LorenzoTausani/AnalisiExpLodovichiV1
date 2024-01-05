@@ -8,6 +8,7 @@ from scipy.stats import zscore
 from sklearn.decomposition import PCA
 from scipy import stats
 import matplotlib.pyplot as plt
+from typing import Union,  Dict, Any
 import Plotting_functions
 from Plotting_functions import *
 from Generic_tools.Generic_list_operations import *
@@ -66,7 +67,17 @@ class CL_stimulation_data(stimulation_data):
       os.chdir(self.path)
       return out_list
    
-   def add_keys_logicalDict(self, logical_dict):
+   def add_keys_logicalDict(self, logical_dict: Dict[str, Any]) -> Dict[str, Any]:
+      
+      """
+      Add integrated keys to the logical dictionary (e.g. 180, +, gray -, ...).
+
+      Parameters:
+      - logical_dict (Dict[str, Any]): The input logical dictionary.
+
+      Returns:
+      Dict[str, Any]: The logical dictionary with added keys.
+      """
       stim_names= logical_dict.keys()
       if any(contains_character(string, pattern=r'\+') for string in stim_names): #check if any element of stim_names contains a '+' sign
         #ora creo le voci integrate: orientamenti, direzioni drift [+,-] e relativi grays
@@ -166,9 +177,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
-    logical_dict_old = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
 
-    return logical_dict, logical_dict_old
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
     # DF_F = (F_neuSubtract - F0)/ F0
     # DF_F_zscored = zscore(DF_F, axis=1)  
@@ -386,76 +395,6 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
 
   return locals()
 
-
-def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
-    SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
-    logical_dict_filename = session_name+'_logical_dict.npz'
-    if not(os.path.isfile(logical_dict_filename)) or change_existing_dict_files==True:
-        logical_dict ={} #contiene gli indici dei vari stimoli
-        for stim in df['Orientamenti'].unique():
-            if stim != 'END':
-                if stim in SBAs:
-                    logical_dict[stim]= stimoli==stim
-                else: #stimoli ripetuti (orientamenti, flash)
-                    vettore =stimoli==stim # Definisci il vettore booleano di True e False
-                    # Converti il vettore booleano in una stringa di 0 e 1
-                    stringa = ''.join('1' if x else '0' for x in vettore)
-                    # Trova tutte le sequenze di 1 consecutive nella stringa e calcola la loro lunghezza
-                    indici_inizio_gruppi = [match.start() for match in re.finditer('1+', stringa)]
-                    indici_fine_gruppi = [match.end() for match in re.finditer('1+', stringa)]
-                    indici_array = np.column_stack((indici_inizio_gruppi, indici_fine_gruppi))
-                    logical_dict[str(stim)] = indici_array
-
-        if any(contains_character(string, pattern=r'\+') for string in df['Orientamenti'].unique()): #check if any element of df['Orientamenti'].unique() contains a '+' sign
-
-          #ora creo le voci integrate
-          ors  = df['Orientamenti'].unique()
-          pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
-
-          new_keys = []
-          for elem in ors:
-              matches = re.findall(pattern, elem)
-              try:
-                matches = matches[0]
-              except:
-                print('')
-              if not(matches == []):
-                new_keys.append(matches)
-
-          new_keys = list(set(new_keys))+['+','-']
-          new_keys =new_keys + ['gray '+ n for n in new_keys]
-
-          for new_key in new_keys:
-            if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
-              key_plus = new_key+'+'
-              key_minus = new_key+'-'
-
-              alt_keys = [key_plus, key_minus]
-            elif 'gray' in new_key:
-              plus_minus = new_key[-1]
-              alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
-            else:
-              plus_minus = new_key[-1]
-              alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
-            
-            # Concatenate the arrays vertically (axis=0) to form a single array
-            arrays_list = []
-            for k in alt_keys:
-              try:
-                arrays_list.append(logical_dict[k])
-              except:
-                print(k+' is missing')
-            concatenated_array = np.concatenate(arrays_list, axis=0)
-
-            # Sort the rows in ascending order based on the first column (index 0)
-            sorted_array = concatenated_array[np.argsort(concatenated_array[:, 0])]
-            logical_dict[new_key] = sorted_array
-            
-        np.savez(logical_dict_filename, **logical_dict)
-    else:
-        logical_dict = np.load(logical_dict_filename)
-
-    return logical_dict
 
 def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_type = 'F', change_existing_dict_files=True):
     #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
