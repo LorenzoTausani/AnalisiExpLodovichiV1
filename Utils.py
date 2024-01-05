@@ -49,9 +49,8 @@ class CL_stimulation_data(stimulation_data):
               stimulation_df = self.old_version_df(stimulation_df)
               print('direction is not considered in the analysis')
               break
-
       return stimulation_df
-    
+   
    def get_len_phys_recording(self, stimulation_df: pd.DataFrame) -> Union[int, float]:
       out_list = []
       curr_folder_name = os.path.basename(self.path) #prima pre, poi psilo
@@ -66,6 +65,36 @@ class CL_stimulation_data(stimulation_data):
       
       os.chdir(self.path)
       return out_list
+   
+   def add_keys_logicalDict(logical_dict):
+      stim_names= logical_dict.keys()
+      if any(contains_character(string, pattern=r'\+') for string in stim_names): #check if any element of stim_names contains a '+' sign
+        #ora creo le voci integrate: orientamenti, direzioni drift [+,-] e relativi grays
+        pattern = r'\d+\.\d+|\d+'  #pattern per trovare numeri decimali o interi in una stringa
+        #ottieni il primo elemento trovato da re.findall(pattern, elem) per ciascun elemento in stim_names che restituisce almeno una corrispondenza
+        new_keys = [re.findall(pattern, elem)[0] for elem in stim_names if re.findall(pattern, elem)]
+        new_keys = list(set(new_keys))+['+','-']; new_keys =new_keys + ['gray '+ n for n in new_keys] #new_keys ora contiene le voci integrate
+        
+        for new_key in new_keys:
+          plus_minus = new_key[-1] #serve solo per keys non numeriche
+          if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
+            key_plus = new_key+'+'; key_minus = new_key+'-'; alt_keys = [key_plus, key_minus]
+          elif 'gray' in new_key: #dovrebbero entrare solo gray+ e gray-
+            alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
+          else:
+            alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
+          # Concatenate the arrays vertically (axis=0) to form a single array
+          arrays_list = []
+          for k in alt_keys:
+            try:
+              arrays_list.append(logical_dict[k])
+            except:
+              print(k+' is missing')
+          concatenated_array = np.concatenate(arrays_list, axis=0)
+          logical_dict[new_key] = concatenated_array[np.argsort(concatenated_array[:, 0])] # Sort the rows in ascending order based on the first column (index 0)
+      return logical_dict
+    
+
 
 def get_orientation_keys(Mean_SEM_dict):
   numeric_keys_int = [] #    # Creazione di una lista vuota chiamata 'numeric_keys_int' per memorizzare chiavi numeriche come interi.
@@ -126,14 +155,20 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
 
-  def single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files):
+
+  def single_session_processing(stim_data_obj,n_it, F,Fneu,iscell,getoutput,change_existing_dict_files):
+    Session_folder = stim_data_obj.path; session_name = os.path.basename(Session_folder)
+    df = stim_data_obj.Stim_dfs[n_it]; StimVec = stim_data_obj.StimVecs[n_it]
     StimVec, df, [F,Fneu] = cut_recording(StimVec,df, [F[iscell[:,0]==1,:], Fneu[iscell[:,0]==1,:]] , df_Time_var='N_frames', do_custom_cutting = getoutput)
     F_neuSubtract = F - 0.7*Fneu
     F_neuSubtract[F_neuSubtract<0]=0
     #normalizzare?
 
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
-    logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
+    logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
+    logical_dict_old = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
+
+    return logical_dict, logical_dict_old
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis]
     # DF_F = (F_neuSubtract - F0)/ F0
     # DF_F_zscored = zscore(DF_F, axis=1)  
@@ -210,10 +245,13 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   
   results_list = []
   c=0
+  n_it =0
   for df, StimVec, len_Fneu in zip(df_list, StimVec_list,len_Fneu_list):
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
+    logical_dict, logical_dict_old = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return logical_dict, logical_dict_old
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
