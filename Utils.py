@@ -166,7 +166,6 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     stat = np.load('stat.npy', allow_pickle=True)
     stat = stat[iscell[:,0]==1]
 
-
   def single_session_processing(stim_data_obj,n_it, F,Fneu,iscell,getoutput,change_existing_dict_files):
     Session_folder = stim_data_obj.path; session_name = os.path.basename(Session_folder)
     df = stim_data_obj.Stim_dfs[n_it]; StimVec = stim_data_obj.StimVecs[n_it]
@@ -178,7 +177,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis];DF_F = (F_neuSubtract - F0)/ F0; DF_F_zscored = zscore(DF_F, axis=1)
-    
+
     if getoutput:
       Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
       if Yuste_yn == 1:
@@ -190,12 +189,14 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
 
-    Mean_SEM_dict_F = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
+    Mean_SEM_dict_F = stim_data_obj.get_stims_mean_sem(F_to_use, n_it = n_it, phys_recording_type='F', change_existing_dict_files=True) 
+    Mean_SEM_dict_F_old = Create_Mean_SEM_dict(session_name,logical_dict, F_to_use, Fluorescence_type = 'F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
+    
+    return Mean_SEM_dict_F, Mean_SEM_dict_F_old
     Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
     cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
     Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
     
-
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
     p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
     indices_tuned = np.where([cell_OSI_dict['OSI']>0.5])[1]
@@ -256,8 +257,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    logical_dict, logical_dict_old = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return logical_dict, logical_dict_old
+    Mean_SEM_dict_F, Mean_SEM_dict_F_old = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return Mean_SEM_dict_F, Mean_SEM_dict_F_old
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
