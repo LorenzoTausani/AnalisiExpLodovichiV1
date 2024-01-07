@@ -318,8 +318,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    r, Cell_stat_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return r, Cell_stat_dict
+    r, Cell_stat_dict, Cell_Max_dict_F, cell_OSI_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return r, Cell_stat_dict, Cell_Max_dict_F, cell_OSI_dict
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
