@@ -512,7 +512,7 @@ def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_win
   return Cell_Max_dict
 
 
-def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6],plus180or = False):
+def OSIf(Tuning_curve_avgSem, numeric_keys_int, idxs_4orth_ori = [0,1,2,3,4,5,6,7,0,1,2,3,4,5,6],plus180or = False):
   
   idx_max = np.nanargmax(Tuning_curve_avgSem[0,:]) #idx with maximum average activity
   preferred_or = numeric_keys_int[idx_max]
@@ -584,7 +584,7 @@ def Create_OSI_dict(Cell_Max_dict,session_name, OSI_alternative=False,change_exi
       OSI_v = np.full((nr_cells), np.nan)
       PrefOr_v = np.full((nr_cells), np.nan)
     numeric_keys, numeric_keys_int = get_orientation_keys(Cell_Max_dict)
-    idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6] #8 solo per le prime sessioni. Da aggiustare
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,0,1,2,3,4,5,6] #8 solo per le prime sessioni. Da aggiustare
 
     cell_OSI_dict ={}
     for cell_id in range(nr_cells):
@@ -682,7 +682,7 @@ def Create_Cell_stat_dict(logical_dict, Fluorescence, session_name, averaging_wi
         Cell_stat_dict[key] = Cells_maxs
 
 
-    idxs_4orth_ori = [0,1,2,3,4,5,6,7,1,2,3,4,5,6] #si potrebbe forse calcolare in un modo più intelligente
+    idxs_4orth_ori = [0,1,2,3,4,5,6,7,0,1,2,3,4,5,6] #si potrebbe forse calcolare in un modo più intelligente
     Cell_ori_tuning_curve_mean = np.full((nr_cells,len(numeric_keys)), np.nan) #len(Cell_stat_dict.keys() = nr of orientations
     Cell_ori_tuning_curve_sem = np.full((nr_cells,len(numeric_keys)), np.nan)
 
