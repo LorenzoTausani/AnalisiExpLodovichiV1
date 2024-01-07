@@ -133,8 +133,8 @@ def compute_OSI(Cell_ori_tuning_curve_mean):
     if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
       p_ors.remove(360)
     ortho_ors = get_orthogonal_orientations(max_or)
-
-    R_pref = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in p_ors]]) #qui max è considerato sommando l'orientamento parallelo
+    R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
+    #R_pref = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in p_ors]]) #qui max è considerato sommando l'orientamento parallelo
     R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
     OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
 
