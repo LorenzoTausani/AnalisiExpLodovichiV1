@@ -113,7 +113,7 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0,  cha
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(numeric_keys): #per ogni orientamento...
     grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
-    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording('gray '+key, phys_recording, idx_logical_dict=n_it)
+    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True)
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
