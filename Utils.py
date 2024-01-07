@@ -105,6 +105,21 @@ class CL_stimulation_data(stimulation_data):
           logical_dict[new_key] = concatenated_array[np.argsort(concatenated_array[:, 0])] # Sort the rows in ascending order based on the first column (index 0)
       return logical_dict
     
+def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0,  change_existing_dict_files=True): #OSI_alternative=True
+  #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
+  #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
+  logical_dict = stimulation_data_obj.logical_dict[n_it]
+  numeric_keys, _ = get_orientation_keys(logical_dict)
+  Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
+  for i, key in enumerate(numeric_keys): #per ogni orientamento...
+    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
+    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording('gray '+key, phys_recording, idx_logical_dict=n_it)
+    Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+    Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
+    Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+    Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
+    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key])
+  return Increase_stim_vs_pre, Cell_ori_tuning_curve_mean, Cell_ori_tuning_curve_sem
 
 
 def get_orientation_keys(Mean_SEM_dict):
@@ -190,11 +205,12 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
 
-    Mean_SEM_dict_F = stim_data_obj.get_stims_mean_sem(F_to_use, n_it = n_it, phys_recording_type='F', change_existing_dict_files=True)     
-    return Mean_SEM_dict_F, Mean_SEM_dict_F_old
+    r = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_OSI])
+    Cell_stat_dict = Create_Cell_stat_dict(logical_dict_old, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
+    return r, Cell_stat_dict
+    
     Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
     cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
-    Cell_stat_dict = Create_Cell_stat_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
     p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
@@ -256,8 +272,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    Mean_SEM_dict_F, Mean_SEM_dict_F_old = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return Mean_SEM_dict_F, Mean_SEM_dict_F_old
+    r, Cell_stat_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return r, Cell_stat_dict
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
