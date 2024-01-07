@@ -190,9 +190,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
 
-    Mean_SEM_dict_F = stim_data_obj.get_stims_mean_sem(F_to_use, n_it = n_it, phys_recording_type='F', change_existing_dict_files=True) 
-    Mean_SEM_dict_F_old = Create_Mean_SEM_dict(session_name,logical_dict_old, F_to_use, Fluorescence_type = 'F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
-    
+    Mean_SEM_dict_F = stim_data_obj.get_stims_mean_sem(F_to_use, n_it = n_it, phys_recording_type='F', change_existing_dict_files=True)     
     return Mean_SEM_dict_F, Mean_SEM_dict_F_old
     Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
     cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
@@ -393,42 +391,6 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
       df_stim_vs_gray[col[1]] = col[0]
 
   return locals()
-
-
-def Create_Mean_SEM_dict(session_name,logical_dict, Fluorescence,  Fluorescence_type = 'F', change_existing_dict_files=True):
-    #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
-    SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
-    Mean_SEM_dict_filename = session_name+Fluorescence_type+'_Mean_SEM_dict.npz'
-    if not(os.path.isfile(Mean_SEM_dict_filename)) or change_existing_dict_files==True:
-        Mean_SEM_dict = {}
-        for key in logical_dict.keys():
-            if key in SBAs:
-                if Fluorescence.shape[1]>= np.where(logical_dict[key])[0][-1]: #se la traccia è stata tutta registrata
-                  Mean = np.mean(Fluorescence[:,logical_dict[key]], axis=0)
-                  SEM = SEMf(Fluorescence[:,logical_dict[key]])
-                  Mean_SEM = np.column_stack((Mean, SEM))
-                  Mean_SEM_dict[key] = Mean_SEM
-            else:
-                M_inizio_fine = logical_dict[key]
-                stim_lens = M_inizio_fine[:, 1] - M_inizio_fine[:, 0]
-                durata_corretta_stim = int(mode(stim_lens)[0])
-                Betw_cells_mean = np.full((M_inizio_fine.shape[0],durata_corretta_stim), np.nan)
-                for i, row in enumerate(M_inizio_fine):
-                    giusta_durata = np.abs(stim_lens[i]-durata_corretta_stim)< durata_corretta_stim/10
-                    fluo_registrata = Fluorescence.shape[1]>=M_inizio_fine[i, 1]
-                    if giusta_durata and fluo_registrata:
-                        Betw_cells_mean[i,:] = np.mean(Fluorescence[:,row[0]:row[0]+durata_corretta_stim], axis=0)
-                        #Nota: è impossibile che due sequenze dello stesso tipo siano adiacenti
-                Mean = np.mean(Betw_cells_mean, axis=0)
-                SEM = SEMf(Betw_cells_mean)
-                Mean_SEM = np.column_stack((Mean, SEM))
-                Mean_SEM_dict[key] = Mean_SEM
-
-        np.savez(Mean_SEM_dict_filename, **Mean_SEM_dict)
-    else:
-        Mean_SEM_dict = np.load(Mean_SEM_dict_filename)
-    return Mean_SEM_dict
-
 
 def Create_Cell_max_dict(logical_dict, Fluorescence, session_name, averaging_window ='mode', Fluorescence_type='F',change_existing_dict_files = True):
   #Fluorescence_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
