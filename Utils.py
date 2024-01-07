@@ -193,7 +193,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis];DF_F = (F_neuSubtract - F0)/ F0; DF_F_zscored = zscore(DF_F, axis=1)
     logical_dict_old = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
-    return logical_dict,logical_dict_old 
+    #return logical_dict,logical_dict_old 
     if getoutput:
       Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
       if Yuste_yn == 1:
