@@ -105,7 +105,7 @@ class CL_stimulation_data(stimulation_data):
           logical_dict[new_key] = concatenated_array[np.argsort(concatenated_array[:, 0])] # Sort the rows in ascending order based on the first column (index 0)
       return logical_dict
     
-def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0,  change_existing_dict_files=True): #OSI_alternative=True
+def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, change_existing_dict_files=True): #OSI_alternative=True
   #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
   logical_dict = stimulation_data_obj.logical_dict[n_it]
@@ -118,8 +118,52 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0,  cha
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
     Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
-    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key])
-  return Increase_stim_vs_pre, Cell_ori_tuning_curve_mean, Cell_ori_tuning_curve_sem
+    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) #fin qui funziona tutto come usando Create_Cell_stat_dict
+  Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
+
+  return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
+
+def compute_OSI(Cell_ori_tuning_curve_mean):
+  Tuning_curve_avg_DF = pd.DataFrame(Cell_ori_tuning_curve_mean)
+  or_most_active = Tuning_curve_avg_DF.idxmax(axis=1).to_numpy()
+  OSI_v = np.full_like(or_most_active, np.nan)
+
+  for r_idx, max_or in enumerate(or_most_active):
+    p_ors = get_parallel_orientations(max_or)
+    if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
+      p_ors.remove(360)
+    ortho_ors = get_orthogonal_orientations(max_or)
+
+    R_pref = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in p_ors]]) #qui max è considerato sommando l'orientamento parallelo
+    R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
+    OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
+
+  Tuning_curve_avg_DF['Preferred or'] = or_most_active
+  Tuning_curve_avg_DF['OSI'] = OSI_v
+
+  return Tuning_curve_avg_DF
+
+def get_parallel_orientations(orientation):
+  orientation = int(orientation); p_orientations = [orientation]; flat_ors = [0,180,360]
+  if orientation not in flat_ors:
+      if orientation<180:
+        p_orientations.append(orientation+180)
+      elif orientation > 180:
+        p_orientations.append(orientation-180)
+  else: 
+    p_orientations = flat_ors #p_orientations = [ori for ori in flat_ors if ori != orientation]
+  return p_orientations
+
+
+def get_orthogonal_orientations(orientation):
+  orientation = int(orientation); orthogonals_ors = []
+  p_orientations = get_parallel_orientations(orientation)
+  for p_or in p_orientations:
+    if p_or<270:
+      orthogonals_ors.append(p_or+90)
+    elif p_or<360:
+      orthogonals_ors.append(p_or-360+90)
+  return orthogonals_ors
 
 
 def get_orientation_keys(Mean_SEM_dict):
@@ -207,10 +251,12 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
 
     r = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_OSI])
     Cell_stat_dict = Create_Cell_stat_dict(logical_dict_old, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', OSI_alternative=False, change_existing_dict_files=change_existing_dict_files)
-    return r, Cell_stat_dict
-    
     Cell_Max_dict_F = Create_Cell_max_dict(logical_dict, F_to_use, session_name, averaging_window ='mode', Fluorescence_type='F_neuSubtract', change_existing_dict_files=change_existing_dict_files)
     cell_OSI_dict = Create_OSI_dict(Cell_Max_dict_F,session_name, change_existing_dict_files=change_existing_dict_files)
+    
+    return r, Cell_stat_dict, Cell_Max_dict_F, cell_OSI_dict
+    
+
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
     p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
