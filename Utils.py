@@ -321,7 +321,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
             dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
-
+    
+    return stim_data_obj, F_to_use
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI])
     return get_stats_results
 
@@ -386,8 +387,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    get_stats_results = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return get_stats_results
+    stim_data_obj, F_to_use = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return stim_data_obj, F_to_use
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
