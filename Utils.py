@@ -322,7 +322,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
 
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_OSI])    
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI])
+    return get_stats_results
 
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
