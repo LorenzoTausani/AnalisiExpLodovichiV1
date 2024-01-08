@@ -8,7 +8,7 @@ from scipy.stats import zscore
 from sklearn.decomposition import PCA
 from scipy import stats
 import matplotlib.pyplot as plt
-from typing import Union,  Dict, Any
+from typing import Union,  Dict, Any, List
 import Plotting_functions
 from Plotting_functions import *
 from Generic_tools.Generic_list_operations import *
@@ -105,7 +105,19 @@ class CL_stimulation_data(stimulation_data):
           logical_dict[new_key] = concatenated_array[np.argsort(concatenated_array[:, 0])] # Sort the rows in ascending order based on the first column (index 0)
       return logical_dict
     
-def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, change_existing_dict_files=True): #OSI_alternative=True
+def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, change_existing_dict_files=True) -> Tuple[Dict, pd.DataFrame, Dict]:
+  """
+  Calculate Orientation Selectivity Index (OSI) based on stimulation data and physiological recordings.
+
+  Parameters:
+  - stimulation_data_obj: Stimulation data object.
+  - phys_recording (np.ndarray): Physiological recording data.
+  - n_it (int): Iteration index.
+  - change_existing_dict_files (bool): Flag to indicate whether to change existing dictionary files.
+
+  Returns:
+  - Tuple[Dict, pd.DataFrame, Dict]: Tuple containing Increase_stim_vs_pre (DF/F stim vs pre), Tuning_curve_avg_DF (average tuning curve for each cell + preferred ori and OSI), and Cell_ori_tuning_curve_sem.
+  """
   #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
   logical_dict = stimulation_data_obj.logical_dict[n_it]
@@ -123,7 +135,16 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
 
   return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
 
-def compute_OSI(Cell_ori_tuning_curve_mean):
+def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
+  """
+  Compute Orientation Selectivity Index (OSI) from Cell_ori_tuning_curve_mean.
+
+  Parameters:
+  - Cell_ori_tuning_curve_mean (Dict): Dictionary containing orientation tuning curve means for each cell.
+
+  Returns:
+  - pd.DataFrame: DataFrame containing the OSI values.
+  """
   Tuning_curve_avg_DF = pd.DataFrame(Cell_ori_tuning_curve_mean)
   or_most_active = Tuning_curve_avg_DF.idxmax(axis=1).to_numpy()
   OSI_v = np.full_like(or_most_active, np.nan)
@@ -143,7 +164,16 @@ def compute_OSI(Cell_ori_tuning_curve_mean):
 
   return Tuning_curve_avg_DF
 
-def get_parallel_orientations(orientation):
+def get_parallel_orientations(orientation: Union[int, str]) -> List[int]:
+  """
+  Given an orientation, returns a list of parallel orientations (e.g. 0° -> 0° and 180°).
+
+  Parameters:
+  - orientation (Union[int, str]): The input orientation.
+
+  Returns:
+  - List[int]: A list containing the input orientation and its parallel orientations.
+  """
   orientation = int(orientation); p_orientations = [orientation]; flat_ors = [0,180,360]
   if orientation not in flat_ors:
       if orientation<180:
@@ -155,7 +185,16 @@ def get_parallel_orientations(orientation):
   return p_orientations
 
 
-def get_orthogonal_orientations(orientation):
+def get_orthogonal_orientations(orientation: Union[int, str]) -> List[int]:
+  """
+  Given an orientation, returns a list of orthogonal orientations (e.g. 0° -> 90° and 270°).
+
+  Parameters:
+  - orientation (Union[int, str]): The input orientation.
+
+  Returns:
+  - List[int]: A list containing the orthogonal orientations corresponding to the parallel orientations.
+  """
   orientation = int(orientation); orthogonals_ors = []
   p_orientations = get_parallel_orientations(orientation)
   for p_or in p_orientations:
