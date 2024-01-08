@@ -130,8 +130,9 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
     Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
-    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) #fin qui funziona tutto come usando Create_Cell_stat_dict
+    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
   Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
+  Tuning_curve_avg_DF['Trace goodness'] = trace_goodness_metric(phys_recording)
 
   return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
 
@@ -217,23 +218,34 @@ def get_orientation_keys(Mean_SEM_dict):
   return numeric_keys, numeric_keys_int
 
 #DA METTERE A POSTO
-def trace_good(Fluorescence): #rimetti a posto come una volta
-    if len(Fluorescence.shape)>1:
-      quartile_25 = np.percentile(Fluorescence, 25,axis=1)
-      quartile_99 = np.percentile(Fluorescence, 99,axis=1)
+def trace_goodness_metric(phys_data: np.ndarray) -> np.ndarray:
+    """
+    Calculate a metric indicating the "goodness" of a of the physiological signal. Originally defined for 2p data.
+
+    Parameters:
+    - phys_data (np.ndarray): The physiological data (n cells x timebins).
+
+    Returns:
+    - np.ndarray: goodness metric for each cell
+    """
+    if len(phys_data.shape)>1:
+      quartile_25 = np.percentile(phys_data, 25,axis=1)
+      quartile_99 = np.percentile(phys_data, 99,axis=1)
       STDs_Q1 = []
       for i,q25 in enumerate(quartile_25):
-        traccia = Fluorescence[i,:]
+        traccia = phys_data[i,:]
         dati_primo_quartile =  traccia[(traccia <= q25)]
         STDs_Q1.append(np.std(dati_primo_quartile))
       STDs_Q1 = np.array(STDs_Q1)
       metrica = quartile_99/STDs_Q1
+
     else:
-      quartile_5 = np.percentile(Fluorescence, 5)
-      quartile_95 = np.percentile(Fluorescence, 95)
+      quartile_5 = np.percentile(phys_data, 5)
+      quartile_95 = np.percentile(phys_data, 95)
       metrica = (quartile_95-quartile_5)/quartile_5
 
-    if len(Fluorescence.shape)>1:
+    # Handle cases where the metric is infinite
+    if len(phys_data.shape)>1:
       metrica[metrica==np.Inf] =0
     else:
       if metrica==np.Inf:
@@ -310,10 +322,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
 
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_OSI])
-
-    return get_stats_results
-    
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_OSI])    
 
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
