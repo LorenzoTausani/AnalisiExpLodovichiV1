@@ -16,6 +16,8 @@ from Generic_tools.Generic_foldering_operations import *
 from Generic_tools.Generic_numeric_operations import *
 from Generic_tools.Generic_string_operations import *
 from Generic_tools.Generic_stimulation_handler import *
+from Generic_tools.Generic_stats import *
+from Generic_tools.Generic_graphics import *
 import ast
 import colorsys
 from collections import Counter
@@ -252,6 +254,33 @@ def trace_goodness_metric(phys_data: np.ndarray) -> np.ndarray:
          metrica=0
     return metrica
 
+def Stim_vs_gray(stim_data_obj,phys_recording, n_it: int =0, omitplot = False):
+  n_stimuli = (stim_data_obj.Stim_dfs[n_it].shape[0]-2)//2 #2=initial gray e END. L'ultimo stimolo non ha un gray successivo, perciò considero final gray. /2 perchè ogni stimolo ha il suo gray associato
+  Activity_arr = np.zeros((n_stimuli,phys_recording.shape[0],4)); Activity_arr[:] = np.nan
+  logical_dict = stim_data_obj.logical_dict[n_it]
+  str_keys, _ = get_orientation_keys(logical_dict)
+  writing_pointer = 0
+  for key in str_keys:
+    grating_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it); n_events = grating_phys_recordings.shape[0]
+    gray_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True, correct_stim_duration = 300) #300 = 10 sec di interstimolo
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,0] = np.mean(grating_phys_recordings, axis = 2)
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,1] = np.mean(gray_phys_recordings, axis = 2)
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,2] = np.mean(gray_phys_recordings[:,:,150:], axis = 2)
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,3] = np.mean(gray_phys_recordings[:,:,:150], axis = 2)
+    writing_pointer = writing_pointer+n_events
+
+  conditions = ["Sp1", "Sp2", "Stim", "Gray", "Gray1", "Gray2"]
+  Activity_arr_avgs = np.zeros((phys_recording.shape[0],len(conditions))); Activity_arr_avgs[:] = np.nan
+  Activity_arr_avgs[:,0] = np.mean(stim_data_obj.get_stim_phys_recording('initial gray', phys_recording, idx_logical_dict=n_it), axis=2)
+  Activity_arr_avgs[:,1] = np.mean(stim_data_obj.get_stim_phys_recording('final gray', phys_recording, idx_logical_dict=n_it), axis=2)
+  Activity_arr_avgs[:,2:] = np.nanmean(Activity_arr, axis = 0)
+  df_avg_activity = pd.DataFrame(Activity_arr_avgs, columns=conditions)
+  df_avg_activity['% Stim - Gray']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray'])
+  df_avg_activity['% Stim - Gray2']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray2'])
+  stat_stim_gray = two_sample_test(df_avg_activity['Stim'], df_avg_activity['Gray'], alternative='greater', paired=True, alpha=0.05, small_sample_size=20)
+  custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
+  return df_avg_activity
+
 def dF_F_Yuste_method(Fluorescence,timepoint):
   '''
   Input:
@@ -322,8 +351,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
     
-    return stim_data_obj, F_to_use
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI])
+    #return stim_data_obj, F_to_use
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,Stim_vs_gray])
     return get_stats_results
 
     
@@ -387,8 +416,8 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    stim_data_obj, F_to_use = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return stim_data_obj, F_to_use
+    get_stats_results = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return get_stats_results
     return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
     results_list.append(return_dict)
   return results_list
@@ -522,6 +551,8 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
       df_stim_vs_gray[col[1]] = col[0]
 
   return locals()
+
+
 
 
 def Comparison_gray_stim(Fluorescence, logical_dict,session_name, omitplot = False):
