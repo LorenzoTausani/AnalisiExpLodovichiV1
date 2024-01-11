@@ -278,7 +278,7 @@ def Stim_vs_gray(stim_data_obj,phys_recording, n_it: int =0, omitplot = False):
   df_avg_activity['% Stim - Gray']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray'])
   df_avg_activity['% Stim - Gray2']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray2'])
   stat_stim_gray = two_sample_test(df_avg_activity['Stim'], df_avg_activity['Gray'], alternative='greater', paired=True, alpha=0.05, small_sample_size=20)
-  custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
+  custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray:'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
   return df_avg_activity
 
 def dF_F_Yuste_method(Fluorescence,timepoint):
