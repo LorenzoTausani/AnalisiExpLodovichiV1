@@ -254,7 +254,20 @@ def trace_goodness_metric(phys_data: np.ndarray) -> np.ndarray:
          metrica=0
     return metrica
 
-def Stim_vs_gray(stim_data_obj,phys_recording, n_it: int =0, omitplot = False):
+def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitplot: bool = False) -> pd.DataFrame: #check if it is working (e.g. comparison with previous plotting)
+
+  """
+  Confronta le risposte medie delle attività tra gli stimoli e i periodi di grigio/interstimolo
+
+  Parameters:
+  - stim_data_obj: Oggetto contenente i dati degli stimoli.
+  - phys_recording: Array NumPy contenente i dati della registrazione fisiologica.
+  - n_it: Numero di iterazione (default: 0).
+  - omitplot: Flag per indicare se omettere il plot (default: False).
+
+  Returns:
+  - df_avg_activity: DataFrame pandas contenente le medie delle attività per diverse condizioni.
+  """
   n_stimuli = (stim_data_obj.Stim_dfs[n_it].shape[0]-2)//2 #2=initial gray e END. L'ultimo stimolo non ha un gray successivo, perciò considero final gray. /2 perchè ogni stimolo ha il suo gray associato
   Activity_arr = np.zeros((n_stimuli,phys_recording.shape[0],4)); Activity_arr[:] = np.nan
   logical_dict = stim_data_obj.logical_dict[n_it]
