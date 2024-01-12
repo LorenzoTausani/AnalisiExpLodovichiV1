@@ -193,7 +193,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
     Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
     Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
-  Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
+  Tuning_curve_avg_DF= compute_DSI(Cell_ori_tuning_curve_mean)
 
   return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
 
