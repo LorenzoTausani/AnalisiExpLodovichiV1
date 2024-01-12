@@ -21,6 +21,7 @@ from Generic_tools.Generic_graphics import *
 import ast
 import colorsys
 from collections import Counter
+# update submodule: git submodule update --recursive --remote Generic_tools
 
 class CL_stimulation_data(stimulation_data):
    
@@ -158,7 +159,6 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
       p_ors.remove(360)
     ortho_ors = get_orthogonal_orientations(max_or)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
-    #R_pref = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in p_ors]]) #qui max è considerato sommando l'orientamento parallelo
     R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
     OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
 
@@ -166,6 +166,64 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   Tuning_curve_avg_DF['OSI'] = OSI_v
 
   return Tuning_curve_avg_DF
+
+def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, change_existing_dict_files=True) -> Tuple[Dict, pd.DataFrame, Dict]:
+  """
+  Calculate Direction Selectivity Index (DSI) based on stimulation data and physiological recordings.
+
+  Parameters:
+  - stimulation_data_obj: Stimulation data object.
+  - phys_recording (np.ndarray): Physiological recording data.
+  - n_it (int): Iteration index.
+  - change_existing_dict_files (bool): Flag to indicate whether to change existing dictionary files.
+
+  Returns:
+  - Tuple[Dict, pd.DataFrame, Dict]: Tuple containing Increase_stim_vs_pre (DF/F stim vs pre), Tuning_curve_avg_DF (average tuning curve for each cell + preferred ori and DSI), and Cell_ori_tuning_curve_sem.
+  """
+  #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
+  #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
+  logical_dict = stimulation_data_obj.logical_dict[n_it]
+  filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]')]
+  Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
+  for i, key in enumerate(filtered_keys): #per ogni orientamento...
+    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
+    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True)
+    Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
+    Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
+    Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
+    Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
+    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
+  Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
+
+  return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
+
+def compute_DSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
+  """
+  Compute Direction Selectivity Index (DSI) from Cell_ori_tuning_curve_mean.
+
+  Parameters:
+  - Cell_ori_tuning_curve_mean (Dict): Dictionary containing orientation tuning curve means for each cell.
+
+  Returns:
+  - pd.DataFrame: DataFrame containing the DSI values.
+  """
+  Tuning_curve_avg_DF = pd.DataFrame(Cell_ori_tuning_curve_mean)
+  or_most_active = Tuning_curve_avg_DF.idxmax(axis=1).to_numpy()
+  DSI_v = np.full_like(or_most_active, np.nan)
+
+  for r_idx, max_or in enumerate(or_most_active):
+    last_char = max_or[-1]; new_char = '+' if last_char == '-' else '-'
+    max_opposite_dir = substitute_character(max_or, last_char, new_char)
+    R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
+    R_pref_opposite_dir = Tuning_curve_avg_DF.loc[r_idx,[max_opposite_dir]].to_numpy()
+    DSI_v[r_idx] = (R_pref -R_pref_opposite_dir)/(R_pref + R_pref_opposite_dir)
+
+  Tuning_curve_avg_DF['Preferred or'] = or_most_active
+  Tuning_curve_avg_DF['DSI'] = DSI_v
+
+  return Tuning_curve_avg_DF
+
+
 
 def get_parallel_orientations(orientation: Union[int, str]) -> List[int]:
   """
@@ -290,6 +348,7 @@ def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitpl
   df_avg_activity = pd.DataFrame(Activity_arr_avgs, columns=conditions)
   df_avg_activity['% Stim - Gray']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray'])
   df_avg_activity['% Stim - Gray2']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray2'])
+  df_avg_activity['% Stim - Gray1'] = perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray1'])
   stat_stim_gray = two_sample_test(df_avg_activity['Stim'], df_avg_activity['Gray'], alternative='greater', paired=True, alpha=0.05, small_sample_size=20)
   custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray:'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
   return df_avg_activity
@@ -365,7 +424,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         F_to_use = dF_F_Yuste
     
     #return stim_data_obj, F_to_use
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,Stim_vs_gray])
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
     return get_stats_results
 
     
