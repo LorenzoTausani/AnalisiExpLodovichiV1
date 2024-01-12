@@ -183,7 +183,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
   #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
   logical_dict = stimulation_data_obj.logical_dict[n_it]
-  filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]')]
+  filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]') and not contains_character(key, r'[a-zA-Z]')]
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(filtered_keys): #per ogni orientamento...
     grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
