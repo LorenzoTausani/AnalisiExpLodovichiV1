@@ -336,8 +336,8 @@ def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitpl
     gray_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True, correct_stim_duration = 300) #300 = 10 sec di interstimolo
     Activity_arr[writing_pointer:writing_pointer+n_events,:,0] = np.mean(grating_phys_recordings, axis = 2)
     Activity_arr[writing_pointer:writing_pointer+n_events,:,1] = np.mean(gray_phys_recordings, axis = 2)
-    Activity_arr[writing_pointer:writing_pointer+n_events,:,2] = np.mean(gray_phys_recordings[:,:,150:], axis = 2)
-    Activity_arr[writing_pointer:writing_pointer+n_events,:,3] = np.mean(gray_phys_recordings[:,:,:150], axis = 2)
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,2] = np.mean(gray_phys_recordings[:,:,:150], axis = 2)
+    Activity_arr[writing_pointer:writing_pointer+n_events,:,3] = np.mean(gray_phys_recordings[:,:,150:], axis = 2)
     writing_pointer = writing_pointer+n_events
 
   conditions = ["Sp1", "Sp2", "Stim", "Gray", "Gray1", "Gray2"]
@@ -427,8 +427,6 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #return stim_data_obj, F_to_use
         
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
-    p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, old_logical_dict,session_name)
-    get_stats_results.append([p_value,perc_diff_wGray2, perc_diff_wGray2_vector])
     return get_stats_results
 
     
@@ -629,55 +627,6 @@ def Analyze_all(Force_reanalysis = True, select_subjects = True, change_existing
   return locals()
 
 
-
-
-def Comparison_gray_stim(Fluorescence, logical_dict,session_name, omitplot = False):
-  
-  n_b = 200
-  str_keys, list_keys = get_orientation_keys(logical_dict)
-  Activity_arr = np.zeros((Fluorescence.shape[0],n_b,4))
-  Activity_arr[:] = np.nan
-  
-  for c_ID,cell in enumerate(Fluorescence):
-    pointer=0
-    for i,k in enumerate(str_keys):
-      stim_times = logical_dict[k]
-      for stim in stim_times:
-        Activity_arr[c_ID,pointer,0] = np.mean(cell[stim[0]:stim[1]])
-        pointer+=1
-      pointer = pointer - stim_times.shape[0]
-      stim_times = logical_dict['gray '+k]
-      for c,stim in enumerate(stim_times):
-        Activity_arr[c_ID,pointer,1] = np.mean(cell[stim[0]:stim[1]])
-        Activity_arr[c_ID,pointer,2] = np.mean(cell[stim[0]:stim[0]+150])
-        Activity_arr[c_ID,pointer,3] = np.mean(cell[stim[0]+150:stim[1]])
-        pointer+=1
-
-  Activity_arr2 = np.zeros((Fluorescence.shape[0],10))
-  Activity_arr2[:] = np.nan
-  Activity_arr2[:,0] = np.mean(Fluorescence[:,logical_dict['initial gray']], axis=1)
-  Activity_arr2[:,1] = np.mean(Fluorescence[:,logical_dict['final gray']], axis=1)
-  Activity_arr2[:,2:6] = np.nanmean(Activity_arr, axis = 1)
-  # Step 1: Randomly select 24 unique column indices (5sx24 = 120s)
-  selected_columns = np.random.choice(Activity_arr.shape[1]-1, 24, replace=False)
-  Activity_arr2[:,6:10] = np.nanmean(Activity_arr[:, selected_columns], axis=1)     
-  conditions = ["Sp1", "Sp2", "Stim", "Gray", "Gray1", "Gray2"]
-  plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
-  plt.boxplot(Activity_arr2[:,:6], labels=conditions)
-  # Add labels and title
-  plt.xlabel("Conditions")
-  plt.ylabel("Fluorescence")
-  perc_diff_wGray2_vector = ((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100
-  perc_diff_wGray = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,3])/Activity_arr2[:,3])*100)
-  perc_diff_wGray2 = np.nanmean(((Activity_arr2[:,2] - Activity_arr2[:,5])/Activity_arr2[:,5])*100)
-  _, p_value = stats.wilcoxon(Activity_arr2[:,2] - Activity_arr2[:,3], alternative='greater')
-  if omitplot==False:
-    plt.title("P value "+str("{:.2e}".format(p_value))+', % diff '+str("{:.2}".format(perc_diff_wGray)))
-    plt.savefig(session_name+'Fluorescence_periods_comparison.png')
-    plt.show()
-
-  #return Activity_arr,Activity_arr2
-  return p_value,perc_diff_wGray2, perc_diff_wGray2_vector
 
 def compute_correlation(Fluorescence, logical_dict):
   def costruisci_timeseries_spezzata(Fluorescence,intervalli_logical_dict):
