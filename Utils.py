@@ -410,6 +410,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     F_to_use = F_neuSubtract
     
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
+    old_logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis];DF_F = (F_neuSubtract - F0)/ F0; DF_F_zscored = zscore(DF_F, axis=1)
     if getoutput:
@@ -426,7 +427,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #return stim_data_obj, F_to_use
         
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
-    p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
+    p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, old_logical_dict,session_name)
     get_stats_results.append([p_value,perc_diff_wGray2, perc_diff_wGray2_vector])
     return get_stats_results
 
@@ -802,3 +803,77 @@ def stat_comparison_betw_cells(responding_cells_df_ALL):
     plt.title('p value: '+str(p_value))
     plt.show()
 
+
+def Create_logical_dict(session_name,stimoli,df, change_existing_dict_files=True):
+    def contains_plus_character(vector): #function to check if any element of df['Orientamenti'].unique() contains a '+' sign
+      for string in vector:
+          if '+' in string:
+              return True
+      return False
+    SBAs = ['initial gray', 'initial black', 'after flash gray', 'final gray']
+    logical_dict_filename = session_name+'_logical_dict.npz'
+    if not(os.path.isfile(logical_dict_filename)) or change_existing_dict_files==True:
+        logical_dict ={} #contiene gli indici dei vari stimoli
+        for stim in df['Orientamenti'].unique():
+            if stim != 'END':
+                if stim in SBAs:
+                    logical_dict[stim]= stimoli==stim
+                else: #stimoli ripetuti (orientamenti, flash)
+                    vettore =stimoli==stim # Definisci il vettore booleano di True e False
+                    # Converti il vettore booleano in una stringa di 0 e 1
+                    stringa = ''.join('1' if x else '0' for x in vettore)
+                    # Trova tutte le sequenze di 1 consecutive nella stringa e calcola la loro lunghezza
+                    indici_inizio_gruppi = [match.start() for match in re.finditer('1+', stringa)]
+                    indici_fine_gruppi = [match.end() for match in re.finditer('1+', stringa)]
+                    indici_array = np.column_stack((indici_inizio_gruppi, indici_fine_gruppi))
+                    logical_dict[str(stim)] = indici_array
+
+        if contains_plus_character(df['Orientamenti'].unique()):
+          #ora creo le voci integrate
+          ors  = df['Orientamenti'].unique()
+          pattern = r'\d+\.\d+|\d+'  # espressione regolare per cercare tutti i numeri
+
+          new_keys = []
+          for elem in ors:
+              matches = re.findall(pattern, elem)
+              try:
+                matches = matches[0]
+              except:
+                print('')
+              if not(matches == []):
+                new_keys.append(matches)
+
+          new_keys = list(set(new_keys))+['+','-']
+          new_keys =new_keys + ['gray '+ n for n in new_keys]
+
+          for new_key in new_keys:
+            if "+" not in new_key and "-" not in new_key: #i.e. if new_key è un numero
+              key_plus = new_key+'+'
+              key_minus = new_key+'-'
+
+              alt_keys = [key_plus, key_minus]
+            elif 'gray' in new_key:
+              plus_minus = new_key[-1]
+              alt_keys = [key for key in logical_dict.keys() if 'gray' in key and plus_minus in key]
+            else:
+              plus_minus = new_key[-1]
+              alt_keys = [key for key in logical_dict.keys() if not('gray' in key) and plus_minus in key]
+            
+            # Concatenate the arrays vertically (axis=0) to form a single array
+            arrays_list = []
+            for k in alt_keys:
+              try:
+                arrays_list.append(logical_dict[k])
+              except:
+                print(k+' is missing')
+            concatenated_array = np.concatenate(arrays_list, axis=0)
+
+            # Sort the rows in ascending order based on the first column (index 0)
+            sorted_array = concatenated_array[np.argsort(concatenated_array[:, 0])]
+            logical_dict[new_key] = sorted_array
+            
+        np.savez(logical_dict_filename, **logical_dict)
+    else:
+        logical_dict = np.load(logical_dict_filename)
+
+    return logical_dict
