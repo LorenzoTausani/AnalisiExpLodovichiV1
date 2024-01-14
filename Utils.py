@@ -424,7 +424,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         F_to_use = dF_F_Yuste
     
     #return stim_data_obj, F_to_use
+        
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
+    p_value,perc_diff_wGray2, perc_diff_wGray2_vector = Comparison_gray_stim(F_to_use, logical_dict,session_name)
+    get_stats_results.append([p_value,perc_diff_wGray2, perc_diff_wGray2_vector])
     return get_stats_results
 
     
