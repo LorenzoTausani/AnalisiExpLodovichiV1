@@ -219,7 +219,7 @@ def compute_DSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
     max_opposite_dir = substitute_character(max_or, last_char, new_char)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
     R_pref_opposite_dir = Tuning_curve_avg_DF.loc[r_idx,[max_opposite_dir]].to_numpy()
-    DSI_v[r_idx] = (R_pref -R_pref_opposite_dir)/(R_pref + R_pref_opposite_dir)
+    DSI_v[r_idx] = float((R_pref -R_pref_opposite_dir)/(R_pref + R_pref_opposite_dir))
 
   Tuning_curve_avg_DF['Preferred or'] = or_most_active
   Tuning_curve_avg_DF['DSI'] = DSI_v
