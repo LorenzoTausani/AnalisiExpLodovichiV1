@@ -8,6 +8,9 @@ from scipy.stats import zscore
 from sklearn.decomposition import PCA
 from scipy import stats
 import matplotlib.pyplot as plt
+from itertools import combinations
+from functools import reduce
+
 from typing import Union,  Dict, Any, List
 import Plotting_functions
 from Plotting_functions import *
@@ -353,6 +356,49 @@ def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitpl
   custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray:'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
   return df_avg_activity
 
+def get_idxs_above_threshold(measures: np.ndarray, threshold: float, dict_fields: List[str] = ['cell_nr', 'idxs_above_threshold', 'nr_above_threshold', 'fraction_above_threshold']) -> Dict[str, Any]:
+  """
+  Retrieves indexes and frequency of elements above a certain threshold in an array.
+
+  Args:
+  - measures (np.ndarray): NumPy array containing the measurements.
+  - threshold (float): Threshold for considering a measurement above the threshold.
+  - dict_fields (List[str], optional): List of fields for the output dictionary. Default is ['cell_nr', 'idxs_above_threshold', 'nr_above_threshold', 'fraction_above_threshold'].
+
+  Returns:
+  - Dict[str, Any]: Dictionary containing indexes and frequency of elements above threshold.
+  """
+
+  dict_above_threshold = {}
+  sample_sz = measures.shape[0]; dict_above_threshold[dict_fields[0]] = sample_sz # Calculate the number of samples
+  idxs_above_threshold = np.where(measures>threshold)[0]; dict_above_threshold[dict_fields[1]] = idxs_above_threshold  # Find the indices above the threshold 
+  nr_above_threshold = len(idxs_above_threshold); fraction_above_threshold = nr_above_threshold/sample_sz #absolute and relative frequency of indices above threshold
+  dict_above_threshold[dict_fields[2]] = nr_above_threshold; dict_above_threshold[dict_fields[3]] = fraction_above_threshold #add frequency info into the dictionary
+  return dict_above_threshold
+
+def get_relevant_cell_stats(cell_stats_df: pd.DataFrame, thresholds_dict: Dict[str, float]) -> Dict[Union[str, Tuple[str, ...]], Dict[str, Union[np.ndarray, int, float]]]:
+  """
+  Retrieves statistical information for relevant cell statistics based on given thresholds.
+
+  Args:
+  - cell_stats_df (pd.DataFrame): DataFrame containing cell statistics.
+  - thresholds_dict (Dict[str, float]): Dictionary mapping statistic names to their corresponding thresholds.
+
+  Returns:
+  - Dict[Union[str, Tuple[str, ...]], Dict[str, Union[np.ndarray, int, float]]]: Dictionary containing the summary statistics.
+  """
+  all_key_combinations = [comb for r in range(1, len(cell_stats_df) + 1) for comb in combinations(cell_stats_df.keys(), r)]
+  stats_dict = {}
+  for combination in all_key_combinations:
+      if len(combination)==1:
+        stats_dict[combination[0]] = get_idxs_above_threshold(cell_stats_df[combination[0]], thresholds_dict[combination[0]])
+      else: # Combination of multiple metrics
+        metrics = " and ".join(combination); stats_dict[metrics]={}
+        stats_dict[metrics]['idxs_above_threshold'] = reduce(np.intersect1d, ([stats_dict[m]['idxs_above_threshold'] for m in combination]))  # Calculate intersection of indices above threshold for multiple metrics
+        stats_dict[metrics]['nr_above_threshold'] = len(stats_dict[metrics]['idxs_above_threshold']) #absolute frequency
+        stats_dict[metrics]['fraction_above_threshold'] = stats_dict[metrics]['nr_above_threshold']/stats_dict[combination[0]]['cell_nr'] #relative frequency
+  return stats_dict
+
 def dF_F_Yuste_method(Fluorescence,timepoint):
   '''
   Input:
@@ -427,7 +473,10 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #return stim_data_obj, F_to_use
         
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
-    return get_stats_results
+    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[2][1][['DSI']]], axis=1)
+    thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
+    stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
+    return get_stats_results, cell_stats_df, stats_dict
 
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
@@ -486,14 +535,12 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
   results_list = []
   c=0
   n_it =0
-  for df, StimVec, len_Fneu in zip(df_list, StimVec_list,len_Fneu_list):
+  for len_Fneu in len_Fneu_list:
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    get_stats_results = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return get_stats_results
-    return_dict = single_session_processing(session_name,Session_folder,F,Fneu,iscell,df,StimVec,getoutput,change_existing_dict_files)
-    results_list.append(return_dict)
+    get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    results_list.append([get_stats_results, cell_stats_df, stats_dict])
   return results_list
     
 
