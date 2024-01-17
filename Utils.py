@@ -163,7 +163,7 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
     ortho_ors = get_orthogonal_orientations(max_or)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
     R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
-    OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
+    OSI_v[r_idx] = float((R_pref -R_ortho)/(R_pref + R_ortho))
 
   Tuning_curve_avg_DF['Preferred or'] = or_most_active
   Tuning_curve_avg_DF['OSI'] = OSI_v
