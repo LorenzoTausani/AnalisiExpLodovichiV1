@@ -163,10 +163,10 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
     ortho_ors = get_orthogonal_orientations(max_or)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
     R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
-    OSI_v[r_idx] = float((R_pref -R_ortho)/(R_pref + R_ortho))
+    OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
 
   Tuning_curve_avg_DF['Preferred or'] = or_most_active
-  Tuning_curve_avg_DF['OSI'] = OSI_v
+  Tuning_curve_avg_DF['OSI'] = OSI_v; Tuning_curve_avg_DF['OSI'] = Tuning_curve_avg_DF['OSI'].astype(float)
 
   return Tuning_curve_avg_DF
 
@@ -219,10 +219,10 @@ def compute_DSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
     max_opposite_dir = substitute_character(max_or, last_char, new_char)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
     R_pref_opposite_dir = Tuning_curve_avg_DF.loc[r_idx,[max_opposite_dir]].to_numpy()
-    DSI_v[r_idx] = float((R_pref -R_pref_opposite_dir)/(R_pref + R_pref_opposite_dir))
+    DSI_v[r_idx] = (R_pref -R_pref_opposite_dir)/(R_pref + R_pref_opposite_dir)
 
   Tuning_curve_avg_DF['Preferred or'] = or_most_active
-  Tuning_curve_avg_DF['DSI'] = DSI_v
+  Tuning_curve_avg_DF['DSI'] = DSI_v; Tuning_curve_avg_DF['DSI'] = Tuning_curve_avg_DF['DSI'].astype(float)
 
   return Tuning_curve_avg_DF
 
