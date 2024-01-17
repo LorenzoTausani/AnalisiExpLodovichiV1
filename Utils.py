@@ -353,7 +353,7 @@ def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitpl
   df_avg_activity['% Stim - Gray2']=perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray2'])
   df_avg_activity['% Stim - Gray1'] = perc_difference(df_avg_activity['Stim'],df_avg_activity['Gray1'])
   stat_stim_gray = two_sample_test(df_avg_activity['Stim'], df_avg_activity['Gray'], alternative='greater', paired=True, alpha=0.05, small_sample_size=20)
-  custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray:'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray']))))
+  custom_boxplot(df_avg_activity, selected_columns=['Stim', 'Gray', 'Gray1','Gray2'],title = '% diff Stim - Gray2:'+str("{:.2}".format(np.nanmean(df_avg_activity['% Stim - Gray2']))))
   return df_avg_activity
 
 def get_idxs_above_threshold(measures: np.ndarray, threshold: float, dict_fields: List[str] = ['cell_nr', 'idxs_above_threshold', 'nr_above_threshold', 'fraction_above_threshold']) -> Dict[str, Any]:
@@ -438,7 +438,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
       remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
 
   stim_data = CL_stimulation_data(Session_folder, Stim_var = 'Orientamenti', Time_var = 'N_frames',not_consider_direction = False)
-  df_list, StimVec_list,len_Fneu_list = stim_data.get_stim_data()
+  df_list, StimVec_list,len_Fneu_list,session_names = stim_data.get_stim_data()
   
   F_raw = np.load('F.npy')
   Fneu_raw = np.load('Fneu.npy')
@@ -532,16 +532,16 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #if getoutput:
     return locals()
   
-  results_list = []
+  results_dict = {}
   c=0
   n_it =0
-  for len_Fneu in len_Fneu_list:
+  for len_Fneu,s_name in zip(len_Fneu_list, session_names):
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
     get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    results_list.append([get_stats_results, cell_stats_df, stats_dict])
-  return results_list
+    results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict}
+  return results_dict
     
 
 
