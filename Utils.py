@@ -540,7 +540,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
     get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict}
+    results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict, 'get_stats_results': get_stats_results}
   return results_dict
     
 
