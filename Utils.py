@@ -399,6 +399,44 @@ def get_relevant_cell_stats(cell_stats_df: pd.DataFrame, thresholds_dict: Dict[s
         stats_dict[metrics]['fraction_above_threshold'] = stats_dict[metrics]['nr_above_threshold']/stats_dict[combination[0]]['cell_nr'] #relative frequency
   return stats_dict
 
+def search_stats_dict_key(stats_dict: Dict[str, Any], keys_list: List[str]) -> Optional[str]:
+    """
+    Search for a key in the stats_dict that matches the specified keys_list.
+
+    Args:
+    - stats_dict (Dict[str, Any]): The dictionary to search through.
+    - keys_list (List[str]): List of keys to search for.
+
+    Returns:
+    - Optional[str]: The matching key in stats_dict or None if not found.
+    """
+    desired_len = len(keys_list)
+    for dict_key in stats_dict.keys(): # Iterate through each key in stats_dict
+        dict_key_split = dict_key.split(' and ')
+        all_present = all(k in dict_key for k in keys_list) # Check if all keys in keys_list are present in dict_key
+        if all_present and len(dict_key_split) == desired_len: # Check also if the length of dict_key_split is equal to the desired length
+            return dict_key
+    return None # Return None if no matching key is found
+
+def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idx: int,
+                      selectors_stats_dict: List[str] = ['% Stim - Gray2', 'Trace goodness']):
+    """
+    Subset the cell_stats_df DataFrame based on specific criteria from a nested dictionary stats_dict.
+
+    Parameters:
+    - result_dictionary (Dict[str, Dict[str, Any]]): The dictionary containing session information.
+    - session_idx (int): The index of the session to consider. 0 = pre, 1 = post
+    - selectors_stats_dict (List[str]): List of selectors to filter the DataFrame.
+
+    Returns:
+    - pd.DataFrame: The subsetted DataFrame based on the specified criteria.
+    """
+    sessions_list = [key for key in result_dictionary]; my_session = sessions_list[session_idx] #extract the name of the desired session
+    key_of_interest = search_stats_dict_key(result_dictionary[my_session]['stats_dict'], selectors_stats_dict) #find the selector key in the stats dictionary
+    idxs = result_dictionary[my_session]['stats_dict'][key_of_interest]['idxs_above_threshold'] # Extract the indices above the threshold from the stats dictionary
+    return result_dictionary[my_session]['cell_stats_df'].iloc[idxs] #return the cell_stats_df with the selected rows 
+
+
 def dF_F_Yuste_method(Fluorescence,timepoint):
   '''
   Input:
