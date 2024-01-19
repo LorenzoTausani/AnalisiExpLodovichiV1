@@ -418,24 +418,43 @@ def search_stats_dict_key(stats_dict: Dict[str, Any], keys_list: List[str]) -> O
             return dict_key
     return None # Return None if no matching key is found
 
-def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idx: int,
-                      selectors_stats_dict: List[str] = ['% Stim - Gray2', 'Trace goodness']):
+def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs: int,
+                      selectors_stats_dict: List[str] = ['% Stim - Gray2', 'Trace goodness'], multiple_session_operation: str = 'intersection'):
     """
     Subset the cell_stats_df DataFrame based on specific criteria from a nested dictionary stats_dict.
 
     Parameters:
     - result_dictionary (Dict[str, Dict[str, Any]]): The dictionary containing session information.
-    - session_idx (int): The index of the session to consider. 0 = pre, 1 = post
+    - session_idxs (int): The index of the session to consider. 0 = pre, 1 = post
     - selectors_stats_dict (List[str]): List of selectors to filter the DataFrame.
+    -multiple_session_operation : either intersection or union
 
     Returns:
     - pd.DataFrame: The subsetted DataFrame based on the specified criteria.
     """
-    sessions_list = [key for key in result_dictionary]; my_session = sessions_list[session_idx] #extract the name of the desired session
-    key_of_interest = search_stats_dict_key(result_dictionary[my_session]['stats_dict'], selectors_stats_dict) #find the selector key in the stats dictionary
-    idxs = result_dictionary[my_session]['stats_dict'][key_of_interest]['idxs_above_threshold'] # Extract the indices above the threshold from the stats dictionary
-    return result_dictionary[my_session]['cell_stats_df'].iloc[idxs] #return the cell_stats_df with the selected rows 
+    sessions_list = [key for key in result_dictionary];
+    if isinstance(session_idxs, int):
+      my_sessions = [sessions_list[session_idxs]] #extract the name of the desired session
+    else:
+      my_sessions = [sessions_list[i] for i in session_idxs]
 
+    key_of_interest = search_stats_dict_key(result_dictionary[my_sessions[0]]['stats_dict'], selectors_stats_dict) #find the selector key in the stats dictionary
+    idxs = []; dict_df_subset = {}
+    for session in my_sessions:
+      idxs.append(result_dictionary[session]['stats_dict'][key_of_interest]['idxs_above_threshold']) # Extract the indices above the threshold from the stats dictionary
+
+    if len(my_sessions)==1:
+      return result_dictionary[my_sessions[0]]['cell_stats_df'].iloc[idxs[0]] #the cell_stats_df with the selected rows
+    else:
+      if multiple_session_operation=='intersection':
+        common_idxs = np.intersect1d(idxs[0],idxs[1])
+      else:
+        common_idxs = np.union1d(idxs[0],idxs[1])
+
+      for i, session in enumerate(my_sessions): #common indexing between the two
+        dict_df_subset[session] = result_dictionary[session]['cell_stats_df'].iloc[common_idxs]
+
+    return dict_df_subset
 
 def dF_F_Yuste_method(Fluorescence,timepoint):
   '''
