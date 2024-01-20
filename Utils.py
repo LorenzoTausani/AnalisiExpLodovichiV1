@@ -456,6 +456,23 @@ def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs
 
     return dict_df_subset
 
+def delete_fake_cells(phys_recording: np.ndarray) -> np.ndarray:
+    """
+    Deletes rows (cells) in a matrix that contain only a single repeated value.
+
+    Parameters:
+    - phys_recording (np.ndarray): The input matrix (physical recording).
+
+    Returns:
+    - np.ndarray: The matrix with rows containing a single repeated value removed.
+    """
+    # Find the indices of rows with a single repeated value (e.g. 00000000000)
+    index_of_repeated_row = np.where((phys_recording == phys_recording[:, :1]).all(axis=1))[0]
+    if len(index_of_repeated_row) > 0:
+        print(f"The rows at indices {index_of_repeated_row} are constituted only by a single value repeated.")
+        phys_recording = np.delete(phys_recording, index_of_repeated_row, axis=0) # Remove the identified rows from the matrix
+    return phys_recording
+
 def dF_F_Yuste_method(Fluorescence,timepoint):
   '''
   Input:
@@ -510,7 +527,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     StimVec, df, [F,Fneu] = cut_recording(StimVec,df, [F[iscell[:,0]==1,:], Fneu[iscell[:,0]==1,:]] , df_Time_var='N_frames', do_custom_cutting = getoutput)
     F_neuSubtract = F - 0.7*Fneu
     F_neuSubtract[F_neuSubtract<0]=0 #normalizzare?
-    F_to_use = F_neuSubtract
+    F_to_use = F_neuSubtract; F_to_use = delete_fake_cells(F_to_use)
     
     os.makedirs(os.path.join(Session_folder,'Analyzed_data/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Analyzed_data/'))
     old_logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
