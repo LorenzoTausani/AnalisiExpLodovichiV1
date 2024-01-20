@@ -527,7 +527,7 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
         dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
         F_to_use = dF_F_Yuste
     
-    #return stim_data_obj, F_to_use
+    return stim_data_obj, F_to_use
         
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
     cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[2][1][['DSI']]], axis=1)
