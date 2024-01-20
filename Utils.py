@@ -432,7 +432,7 @@ def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs
     Returns:
     - pd.DataFrame: The subsetted DataFrame based on the specified criteria.
     """
-    sessions_list = [key for key in result_dictionary];
+    sessions_list = [key for key in result_dictionary]
     if isinstance(session_idxs, int):
       my_sessions = [sessions_list[session_idxs]] #extract the name of the desired session
     else:
