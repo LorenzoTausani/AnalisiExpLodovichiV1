@@ -448,8 +448,11 @@ def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs
     else:
       if multiple_session_operation=='intersection':
         common_idxs = np.intersect1d(idxs[0],idxs[1])
-      else:
+      elif multiple_session_operation=='union':
         common_idxs = np.union1d(idxs[0],idxs[1])
+      else: #selezione sulla base del pre
+        print('Selection based on '+my_sessions[0])
+        common_idxs = idxs[0]
 
       for i, session in enumerate(my_sessions): #common indexing between the two
         dict_df_subset[session] = result_dictionary[session]['cell_stats_df'].iloc[common_idxs]
