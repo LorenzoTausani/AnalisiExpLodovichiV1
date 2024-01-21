@@ -533,16 +533,16 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     old_logical_dict = Create_logical_dict(session_name,StimVec,df, change_existing_dict_files=change_existing_dict_files)
     logical_dict = stim_data_obj.create_logical_dict(n_it, change_existing_dict_files=change_existing_dict_files)
     # F0 = np.mean(F_neuSubtract[:,logical_dict['final gray']], axis = 1)[:, np.newaxis];DF_F = (F_neuSubtract - F0)/ F0; DF_F_zscored = zscore(DF_F, axis=1)
-    if getoutput:
-      Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
-      if Yuste_yn == 1:
-        dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
-        for i in range(F.shape[1]):
-          if i>=300:
-            c=i-300
-            dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
-        dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
-        F_to_use = dF_F_Yuste
+    # if getoutput:
+    #   Yuste_yn = int(input('Do you want to compute Yuste \' smoothing and use it for the calculations? 1=yes/0=no'))
+    #   if Yuste_yn == 1:
+    #     dF_F_Yuste = np.zeros((F.shape[0],F.shape[1]-300))
+    #     for i in range(F.shape[1]):
+    #       if i>=300:
+    #         c=i-300
+    #         dF_F_Yuste[:,c] = dF_F_Yuste_method(F,i)
+    #     dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
+    #     F_to_use = dF_F_Yuste
         
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
     cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[2][1][['DSI']]], axis=1)
