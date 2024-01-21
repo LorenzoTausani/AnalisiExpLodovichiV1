@@ -130,7 +130,7 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
   numeric_keys, _ = get_orientation_keys(logical_dict)
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(numeric_keys): #per ogni orientamento...
-    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
+    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,latency = 20, correct_stim_duration = 60)
     gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True)
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
@@ -189,7 +189,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
   filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]') and not contains_character(key, r'[a-zA-Z]')]
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(filtered_keys): #per ogni orientamento...
-    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it)
+    grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,latency = 20, correct_stim_duration = 60)
     gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True)
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
@@ -335,7 +335,7 @@ def Stim_vs_gray(stim_data_obj,phys_recording: np.ndarray, n_it: int = 0, omitpl
   str_keys, _ = get_orientation_keys(logical_dict)
   writing_pointer = 0
   for key in str_keys:
-    grating_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it); n_events = grating_phys_recordings.shape[0]
+    grating_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it, latency = 20, correct_stim_duration = 60); n_events = grating_phys_recordings.shape[0]
     gray_phys_recordings = stim_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True, correct_stim_duration = 300) #300 = 10 sec di interstimolo
     Activity_arr[writing_pointer:writing_pointer+n_events,:,0] = np.mean(grating_phys_recordings, axis = 2)
     Activity_arr[writing_pointer:writing_pointer+n_events,:,1] = np.mean(gray_phys_recordings, axis = 2)
