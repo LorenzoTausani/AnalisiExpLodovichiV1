@@ -190,7 +190,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(filtered_keys): #per ogni orientamento...
     grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,latency = 20, correct_stim_duration = 60)
-    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True)
+    gray_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,get_pre_stim=True, correct_stim_duration = 300)
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
@@ -548,9 +548,9 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     #     F_to_use = dF_F_Yuste
         
     #get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
-    return stim_data_obj, F_to_use
+    #return stim_data_obj, F_to_use
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,Stim_vs_gray])
-    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[2][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[1][1][['DSI']]], axis=1)
+    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[2][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[1][1][['DSI']],get_stats_results[1][1][['Preferred or']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
     stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
     return get_stats_results, cell_stats_df, stats_dict
@@ -616,9 +616,7 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    #get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    stim_data_obj, F_to_use = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return stim_data_obj, F_to_use 
+    get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
     results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict, 'get_stats_results': get_stats_results}
     n_it = n_it+1
 
