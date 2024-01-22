@@ -157,15 +157,15 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   OSI_v = np.full_like(or_most_active, np.nan)
 
   for r_idx, max_or in enumerate(or_most_active):
-    p_ors = get_parallel_orientations(max_or)
+    p_ors = get_parallel_orientations(max_or[:-1])
     if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
       p_ors.remove(360)
-    ortho_ors = get_orthogonal_orientations(max_or)
+    ortho_ors = get_orthogonal_orientations(max_or[:-1])
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
-    R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori) for ori in ortho_ors]])
+    R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori)+max_or[-1] for ori in ortho_ors]])
     OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
 
-  Tuning_curve_avg_DF['Preferred or'] = or_most_active
+  Tuning_curve_avg_DF['Preferred or_OSI'] = or_most_active
   Tuning_curve_avg_DF['OSI'] = OSI_v; Tuning_curve_avg_DF['OSI'] = Tuning_curve_avg_DF['OSI'].astype(float)
 
   return Tuning_curve_avg_DF
@@ -186,7 +186,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
   #phys_recording_type can be set to F, Fneu, F_neuSubtract, DF_F, DF_F_zscored
   #averaging_window può anche essere settato come intero, che indichi il numero di frame da considerare
   logical_dict = stimulation_data_obj.logical_dict[n_it]
-  filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]') and not contains_character(key, r'[a-zA-Z]')]
+  filtered_keys = [key for key in logical_dict.keys() if contains_character(key, r'\d') and contains_character(key, r'[+-]') and not contains_character(key, r'[a-zA-Z]')] #contiene un numerico e un +/- ma non lettere (i.e. gray)
   Increase_stim_vs_pre = {}; Cell_ori_tuning_curve_mean = {}; Cell_ori_tuning_curve_sem ={}
   for i, key in enumerate(filtered_keys): #per ogni orientamento...
     grating_phys_recordings = stimulation_data_obj.get_stim_phys_recording(key, phys_recording, idx_logical_dict=n_it,latency = 20, correct_stim_duration = 60)
@@ -197,6 +197,8 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
     Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
   Tuning_curve_avg_DF= compute_DSI(Cell_ori_tuning_curve_mean)
+  Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
+  Tuning_curve_avg_DF['Trace goodness'] = trace_goodness_metric(phys_recording)
 
   return Increase_stim_vs_pre, Tuning_curve_avg_DF, Cell_ori_tuning_curve_sem
 
@@ -225,8 +227,6 @@ def compute_DSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   Tuning_curve_avg_DF['DSI'] = DSI_v; Tuning_curve_avg_DF['DSI'] = Tuning_curve_avg_DF['DSI'].astype(float)
 
   return Tuning_curve_avg_DF
-
-
 
 def get_parallel_orientations(orientation: Union[int, str]) -> List[int]:
   """
@@ -495,7 +495,7 @@ def dF_F_Yuste_method(Fluorescence,timepoint):
   dF_F_Yuste_timepoint = (Fluorescence[:,timepoint]-Avg_first50)/Avg_first50  # Calcolo di dF/F per il 'timepoint' corrente.
   return dF_F_Yuste_timepoint #fluorescenza normalizzata del timepoint
 
-def single_session_analysis(Session_folder='manual_selection', session_name='none',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
+def single_session_analysis(Session_folder='manual_selection',Force_reanalysis = False, change_existing_dict_files=True, PCA_yn = 1):
   nr_PCA_components=10  # Impostazione del numero di componenti PCA desiderate (predefinito a 10).
   getoutput=False
   if Session_folder=='manual_selection':
@@ -508,11 +508,11 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     sbj_folder = os.path.join(Main_folder,sbj)
     session_name = multioption_prompt(os.listdir(sbj_folder), in_prompt='Which session?')
     Session_folder = os.path.join(sbj_folder,session_name) 
-    os.chdir(Session_folder)# cambia la directory corrente alla cartella della sessione selezionata
+  os.chdir(Session_folder)# cambia la directory corrente alla cartella della sessione selezionata
 
-    #se vuoi rianalizzare cancella tutti i foldere delle analisi preesistenti
-    if Force_reanalysis:
-      remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
+  #se vuoi rianalizzare cancella tutti i foldere delle analisi preesistenti
+  if Force_reanalysis:
+    remove_dirs(root = Session_folder, folders_to_remove =['Analyzed_data','Plots'])
 
   stim_data = CL_stimulation_data(Session_folder, Stim_var = 'Orientamenti', Time_var = 'N_frames',not_consider_direction = False)
   df_list, StimVec_list,len_Fneu_list,session_names = stim_data.get_stim_data()
@@ -547,8 +547,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     #     dF_F_Yuste =np.concatenate((np.zeros((dF_F_Yuste.shape[0],300)), dF_F_Yuste), axis=1)
     #     F_to_use = dF_F_Yuste
         
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
-    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[2][1][['DSI']]], axis=1)
+    #get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,Stim_vs_gray])
+    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[2][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[1][1][['DSI']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
     stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
     return get_stats_results, cell_stats_df, stats_dict
@@ -617,6 +618,9 @@ def single_session_analysis(Session_folder='manual_selection', session_name='non
     get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
     results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict, 'get_stats_results': get_stats_results}
     n_it = n_it+1
+
+  df_I = subset_stats_dict(results_dict, session_idxs = [0,1],selectors_stats_dict = ['% Stim - Gray2'], multiple_session_operation='pre')
+  statfilename = '-'.join(session_names); np.savez(statfilename+' stats', **df_I)
   return results_dict
     
 
