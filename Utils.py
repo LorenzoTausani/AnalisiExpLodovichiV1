@@ -548,6 +548,7 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     #     F_to_use = dF_F_Yuste
         
     #get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
+    return stim_data_obj, F_to_use
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,Stim_vs_gray])
     cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[2][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[1][1][['DSI']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
@@ -615,7 +616,9 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    #get_stats_results, cell_stats_df, stats_dict = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    stim_data_obj, F_to_use = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return stim_data_obj, F_to_use 
     results_dict[s_name] = {'cell_stats_df':cell_stats_df, 'stats_dict':stats_dict, 'get_stats_results': get_stats_results}
     n_it = n_it+1
 
