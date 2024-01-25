@@ -157,12 +157,15 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   OSI_v = np.full_like(or_most_active, np.nan)
 
   for r_idx, max_or in enumerate(or_most_active):
-    p_ors = get_parallel_orientations(max_or[:-1])
+    direction = max_or[-1]
+    if contains_character(direction, r'[+-]'):
+      max_or_no_dir = max_or[:-1]; direction =''
+    p_ors = get_parallel_orientations(max_or_no_dir)
     if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
       p_ors.remove(360)
-    ortho_ors = get_orthogonal_orientations(max_or[:-1])
+    ortho_ors = get_orthogonal_orientations(max_or_no_dir)
     R_pref = Tuning_curve_avg_DF.loc[r_idx,[max_or]].to_numpy()
-    R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori)+max_or[-1] for ori in ortho_ors]])
+    R_ortho = np.nanmean(Tuning_curve_avg_DF.loc[r_idx,[str(ori)+direction for ori in ortho_ors]])
     OSI_v[r_idx] = (R_pref -R_ortho)/(R_pref + R_ortho)
 
   Tuning_curve_avg_DF['Preferred or_OSI'] = or_most_active
