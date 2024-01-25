@@ -157,9 +157,12 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   OSI_v = np.full_like(or_most_active, np.nan)
 
   for r_idx, max_or in enumerate(or_most_active):
-    direction = ''
-    if contains_character(direction, r'[+-]'):
-      max_or_no_dir = max_or[:-1]; direction =max_or[-1]
+    direction =max_or[-1] #if with direction, this is the direction
+    if contains_character(direction, r'[+-]'): #if direction is included...
+      max_or_no_dir = max_or[:-1] #the orientation with maximal activity, without direction information
+    else: #if direction info is not included
+      max_or_no_dir = max_or; direction = ''
+
     p_ors = get_parallel_orientations(max_or_no_dir)
     if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
       p_ors.remove(360)
