@@ -136,7 +136,7 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
     Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
-    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
+    Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key])
   Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
   Tuning_curve_avg_DF['Trace goodness'] = trace_goodness_metric(phys_recording)
 
@@ -157,9 +157,9 @@ def compute_OSI(Cell_ori_tuning_curve_mean: Dict)-> pd.DataFrame:
   OSI_v = np.full_like(or_most_active, np.nan)
 
   for r_idx, max_or in enumerate(or_most_active):
-    direction = max_or[-1]
+    direction = ''
     if contains_character(direction, r'[+-]'):
-      max_or_no_dir = max_or[:-1]; direction =''
+      max_or_no_dir = max_or[:-1]; direction =max_or[-1]
     p_ors = get_parallel_orientations(max_or_no_dir)
     if '360' not in Cell_ori_tuning_curve_mean.keys() and 360 in p_ors:
       p_ors.remove(360)
