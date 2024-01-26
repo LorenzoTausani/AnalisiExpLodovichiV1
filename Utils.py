@@ -135,7 +135,7 @@ def get_OSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
-    Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
+    Cell_ori_tuning_curve_mean[key] = np.median(Increase_stim_vs_pre[key],axis=0) #it was nanmean
     Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key])
   Tuning_curve_avg_DF= compute_OSI(Cell_ori_tuning_curve_mean)
   Tuning_curve_avg_DF['Trace goodness'] = trace_goodness_metric(phys_recording)
@@ -200,7 +200,7 @@ def get_DSI(stimulation_data_obj, phys_recording: np.ndarray, n_it: int =0, chan
     Avg_PreStim = np.mean(gray_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame prima dello stimolo (gray)
     Avg_stim = np.mean(grating_phys_recordings, axis = 2) #medio i valori di fluorescenza nei averaging_window frame dello stimolo
     Increase_stim_vs_pre[key] = (Avg_stim-Avg_PreStim)/Avg_PreStim #i.e.  (F - F0) / F0
-    Cell_ori_tuning_curve_mean[key] = np.nanmean(Increase_stim_vs_pre[key],axis=0)
+    Cell_ori_tuning_curve_mean[key] = np.median(Increase_stim_vs_pre[key],axis=0) #it was nanmean
     Cell_ori_tuning_curve_sem[key] = SEMf(Increase_stim_vs_pre[key]) 
   Tuning_curve_avg_DF= compute_DSI(Cell_ori_tuning_curve_mean)
   Tuning_curve_avg_DF_OSI= compute_OSI(Cell_ori_tuning_curve_mean); Tuning_curve_avg_DF['OSI'] = Tuning_curve_avg_DF_OSI['OSI'] 
@@ -555,9 +555,8 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
         
     #get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_OSI,get_DSI,Stim_vs_gray])
     #return stim_data_obj, F_to_use
-    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,Stim_vs_gray])
-    return get_stats_results
-    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[2][['% Stim - Gray2']], get_stats_results[1][1][['OSI']], get_stats_results[1][1][['DSI']],get_stats_results[1][1][['Preferred or']]], axis=1)
+    get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,get_OSI,Stim_vs_gray])
+    cell_stats_df =  pd.concat([get_stats_results[1][1]['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], get_stats_results[2][1][['OSI']], get_stats_results[1][1][['DSI']],get_stats_results[1][1][['Preferred or']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
     stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
     return get_stats_results, cell_stats_df, stats_dict
