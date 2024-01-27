@@ -626,7 +626,7 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
     get_stats_results = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    return get_stats_results
+    #return get_stats_results
     results_dict[s_name] = get_stats_results
     n_it = n_it+1
 
