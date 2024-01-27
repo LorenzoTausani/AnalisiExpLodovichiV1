@@ -5,10 +5,56 @@ import re
 import numpy as np
 import copy
 from matplotlib.gridspec import GridSpec
-import Utils
+
 from Utils import *
+from Generic_tools.Generic_df_operations import *
+from Generic_tools.Generic_string_operations import *
+from Generic_tools.Generic_sorting_operations import *
+from Generic_tools.Generic_graphics import *
+
+from pandas.core.frame import DataFrame
+from typing import Tuple
+
+def plot_cell_tuning(Tuning_curve_avg_DF: DataFrame, cell_id: int) -> Tuple[plt.Figure, plt.Axes]:
+    """
+    Plot the tuning curve for a specific cell.
+
+    Parameters:
+    - Tuning_curve_avg_DF: DataFrame containing tuning curve data.
+    - cell_id: Index of the cell to plot.
+
+    Returns:
+    A tuple containing the Matplotlib Figure and Axes objects (now disenabled)
+    """
+    params = set_default_matplotlib_params(side= 15, shape = 'rect_wide'); fontsz = params['font.size']
+    mrkr = params['lines.marker']; mrkr_sz = params['lines.markersize']
+    # Extract orientation columns and index columns
+    ori_columns = [c for c in Tuning_curve_avg_DF.columns if not(contains_character(c,r'[a-zA-Z]'))]
+    indexes_columns = [c for c in Tuning_curve_avg_DF.columns if contains_character(c,r'[a-zA-Z]')]
+
+    # Extract cell tuning and statistics of that cell
+    cell_tuning = Tuning_curve_avg_DF[ori_columns].iloc[cell_id,:]
+    cell_stats = Tuning_curve_avg_DF[indexes_columns].iloc[cell_id,:]; cell_stats = round_numeric_columns(cell_stats) #i round cell_stats to 2 digits
+    sorted_colnames = sorted(cell_tuning.index.tolist(), key=sort_by_numeric_part) # Sort column names based on numeric part
+
+    fig, ax = plt.subplots()
+    
+    ax.plot(cell_tuning[sorted_colnames], color='purple', marker=mrkr, markersize=mrkr_sz) # Plot the tuning curve
+    ax.set_xlabel('Orientation'); ax.set_ylabel('(Fstim-Fpre)/Fpre'); ax.tick_params(axis='x', labelsize=(fontsz/len(sorted_colnames))*6)
+    
+    text_content = "\n".join([k+'= '+str(cell_stats[k]) for k in cell_stats.keys()]) # Create text content for textbox
+    textbox = ax.text(1.05, 0.5, text_content, transform=ax.transAxes, fontsize=fontsz, verticalalignment='center', bbox=dict(facecolor='white', alpha=0.5)) # Add textbox to the plot
+
+    #return fig, ax
 
 
+
+
+
+
+
+
+#below there are old plotting functions
 def Plot_AvgOrientations(Mean_SEM_dict, Fluorescence_type = 'F',ax=[], ori = '', only_or = False):
   
   keys_of_interest = []
@@ -143,7 +189,7 @@ def Plot_AvgSBA(Mean_SEM_dict,Fluorescence_type = 'F',ax=[]):
   #plt.show()
 
 
-def plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
+def Plot_cell_tuning(cell_OSI_dict, cell_id, Cell_Max_dict, y_range=[], ax=[]):
   
   Tuning_curve_avgSem = cell_OSI_dict['cell_'+str(cell_id)]
   x = np.arange(Tuning_curve_avgSem.shape[1])
