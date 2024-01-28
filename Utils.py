@@ -562,7 +562,7 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
                                 get_stats_results[1]['Tuning_curve_avg_DF'][['Preferred or']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
     stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
-    return create_variable_dict(locals(), variables_list = ['get_stats_results', 'cell_stats_df', 'stats_dict'])
+    return create_variable_dict(locals(), variables_list = ['get_stats_results', 'cell_stats_df', 'stats_dict']), F_to_use, stim_data_obj
 
     
     os.makedirs(os.path.join(Session_folder,'Plots/'), exist_ok=True); os.chdir(os.path.join(Session_folder,'Plots/'))
@@ -625,8 +625,8 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     F = F_raw[:,c:c+len_Fneu]
     Fneu = Fneu_raw[:,c:c+len_Fneu]
     c = len_Fneu
-    get_stats_results = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
-    #return get_stats_results
+    get_stats_results, F_to_use, stim_data_obj = single_session_processing(stim_data,n_it,F,Fneu,iscell,getoutput,change_existing_dict_files)
+    return get_stats_results, F_to_use, stim_data_obj
     results_dict[s_name] = get_stats_results
     n_it = n_it+1
 
