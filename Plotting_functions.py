@@ -27,7 +27,7 @@ def plot_cell_tuning(Tuning_curve_avg_DF: DataFrame, cell_id: int) -> Tuple[plt.
     A tuple containing the Matplotlib Figure and Axes objects (now disenabled)
     """
     params = set_default_matplotlib_params(side= 15, shape = 'rect_wide'); fontsz = params['font.size']
-    mrkr = params['lines.marker']; mrkr_sz = params['lines.markersize']
+    mrkr = '.'; mrkr_sz = params['lines.markersize']
     # Extract orientation columns and index columns
     ori_columns = [c for c in Tuning_curve_avg_DF.columns if not(contains_character(c,r'[a-zA-Z]'))]
     indexes_columns = [c for c in Tuning_curve_avg_DF.columns if contains_character(c,r'[a-zA-Z]')]
