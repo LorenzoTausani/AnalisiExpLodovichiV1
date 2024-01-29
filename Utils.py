@@ -559,7 +559,7 @@ def single_session_analysis(Session_folder='manual_selection',Force_reanalysis =
     get_stats_results = stim_data_obj.get_stats(phys_recording = F_to_use, functions_to_apply=[get_stims_mean_sem,get_DSI,get_OSI,Stim_vs_gray])
     cell_stats_df =  pd.concat([get_stats_results[1]['Tuning_curve_avg_DF']['Trace goodness'],get_stats_results[3][['% Stim - Gray2']], 
                                 get_stats_results[2]['Tuning_curve_avg_DF'][['OSI']], get_stats_results[1]['Tuning_curve_avg_DF'][['DSI']],
-                                get_stats_results[1]['Tuning_curve_avg_DF'][['Preferred or']]], axis=1)
+                                get_stats_results[2]['Tuning_curve_avg_DF'][['Preferred or']]], axis=1)
     thresholds_dict = {'% Stim - Gray2': 6, 'OSI':0.5, 'DSI':0.5,'Trace goodness':15}
     stats_dict = get_relevant_cell_stats(cell_stats_df, thresholds_dict)
     return create_variable_dict(locals(), variables_list = ['get_stats_results', 'cell_stats_df', 'stats_dict']), F_to_use, stim_data_obj
