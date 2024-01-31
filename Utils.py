@@ -426,7 +426,7 @@ def search_stats_dict_key(stats_dict: Dict[str, Any], keys_list: List[str]) -> O
     return None # Return None if no matching key is found
 
 def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs: int,
-                      selectors_stats_dict: List[str] = ['% Stim - Gray2', 'Trace goodness'], multiple_session_operation: str = 'intersection'):
+                      selectors_stats_dict: List[str] = ['% Stim - Gray2', 'Trace goodness'], df_type:str ='cell_stats_df',multiple_session_operation: str = 'intersection'):
     """
     Subset the cell_stats_df DataFrame based on specific criteria from a nested dictionary stats_dict.
 
@@ -451,7 +451,11 @@ def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs
       idxs.append(result_dictionary[session]['stats_dict'][key_of_interest]['idxs_above_threshold']) # Extract the indices above the threshold from the stats dictionary
 
     if len(my_sessions)==1:
-      return result_dictionary[my_sessions[0]]['cell_stats_df'].iloc[idxs[0]] #the cell_stats_df with the selected rows
+      if df_type=='cell_stats_df':
+        return result_dictionary[my_sessions[0]][df_type].iloc[idxs[0]] #the cell_stats_df with the selected rows
+      else: #corr_df
+        c_idxs = get_indexes_in_combs(result_dictionary[my_sessions[0]][df_type],idxs[0])
+        return result_dictionary[my_sessions[0]][df_type].iloc[c_idxs]
     else:
       if multiple_session_operation=='intersection':
         common_idxs = np.intersect1d(idxs[0],idxs[1])
@@ -462,7 +466,11 @@ def subset_stats_dict(result_dictionary: Dict[str, Dict[str, Any]], session_idxs
         common_idxs = idxs[0]
 
       for i, session in enumerate(my_sessions): #common indexing between the two
-        dict_df_subset[session] = result_dictionary[session]['cell_stats_df'].iloc[common_idxs]
+        if df_type=='cell_stats_df':
+          dict_df_subset[session] = result_dictionary[session][df_type].iloc[common_idxs]
+        else:
+          c_idxs = get_indexes_in_combs(result_dictionary[session][df_type],common_idxs)
+          dict_df_subset[session] = result_dictionary[session][df_type].iloc[c_idxs]
 
     return dict_df_subset
 
